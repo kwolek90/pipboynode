@@ -147,6 +147,99 @@ console.log('%cTERMINAL INITIALIZED...', 'color: #00ff00; font-family: monospace
 // Games functionality
 let availableGames = [];
 let currentGame = null;
+let gameInstances = {}; // Store game instances by filename
+
+// Load games sequentially to avoid conflicts
+async function loadGamesSequentially(games, container) {
+    for (const gameInfo of games) {
+        try {
+            await loadSingleGame(gameInfo, container);
+        } catch (error) {
+            console.error(`Failed to load game: ${gameInfo.filename}`, error);
+            // Add error item
+            const gameItem = document.createElement('div');
+            gameItem.className = 'inventory-item';
+            gameItem.style.cursor = 'pointer';
+            gameItem.style.opacity = '0.5';
+            gameItem.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
+                <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
+                <div style="font-size: 0.7em; color: #ff6666; margin-top: 3px;">[ERROR]</div>
+                <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">Load failed</div>
+            `;
+            container.appendChild(gameItem);
+        }
+    }
+}
+
+// Load a single game script
+function loadSingleGame(gameInfo, container) {
+    return new Promise((resolve, reject) => {
+        // Check if script already exists
+        const existingScript = document.querySelector(`script[src="games/${gameInfo.filename}"]`);
+        if (existingScript) {
+            // Script already loaded, just create the UI element
+            createGameItem(gameInfo, container);
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `games/${gameInfo.filename}`;
+        script.onload = () => {
+            // Store the game instance based on filename
+            console.log(`Script loaded: ${gameInfo.filename}`);
+            const gameInstance = getGameInstance(gameInfo.filename);
+            console.log(`Game instance found:`, gameInstance);
+            if (gameInstance) {
+                gameInstances[gameInfo.filename] = gameInstance;
+                createGameItem(gameInfo, container);
+                resolve();
+            } else {
+                console.log(`Game instance not found for ${gameInfo.filename}, available globals:`, {
+                    tetrisGame: typeof tetrisGame,
+                    atomicGame: typeof atomicGame,
+                    pongGame: typeof pongGame
+                });
+                reject(new Error(`Game instance not found for ${gameInfo.filename}`));
+            }
+        };
+        script.onerror = () => {
+            reject(new Error(`Failed to load script: ${gameInfo.filename}`));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Get game instance based on filename
+function getGameInstance(filename) {
+    switch (filename) {
+        case 'holotape-tetris.js':
+            return typeof tetrisGame !== 'undefined' ? tetrisGame : null;
+        case 'atomic-command.js':
+            return typeof atomicGame !== 'undefined' ? atomicGame : null;
+        case 'wasteland-pong.js':
+            return typeof pongGame !== 'undefined' ? pongGame : null;
+        default:
+            return null;
+    }
+}
+
+// Create game item UI element
+function createGameItem(gameInfo, container) {
+    const gameItem = document.createElement('div');
+    gameItem.className = 'inventory-item';
+    gameItem.style.cursor = 'pointer';
+    gameItem.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
+        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
+        <div style="font-size: 0.7em; color: #00aa00; margin-top: 3px;">[${gameInfo.status}]</div>
+        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">${gameInfo.description}</div>
+    `;
+    
+    gameItem.addEventListener('click', () => loadGame(gameInfo.filename, gameInfo.name));
+    container.appendChild(gameItem);
+}
 
 // Load games from directory
 async function loadGames() {
@@ -167,45 +260,24 @@ async function loadGames() {
         
         gamesListContainer.innerHTML = '';
         
-        // Load each game script and create UI elements
+        // Load all games at once
         for (const gameInfo of data.games) {
             try {
-                // Load the game script
-                const script = document.createElement('script');
-                script.src = `games/${gameInfo.filename}`;
-                script.onload = () => {
-                    // Create game item with metadata from API
-                    const gameItem = document.createElement('div');
-                    gameItem.className = 'inventory-item';
-                    gameItem.style.cursor = 'pointer';
-                    gameItem.innerHTML = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
-                        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
-                        <div style="font-size: 0.7em; color: #00aa00; margin-top: 3px;">[${gameInfo.status}]</div>
-                        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">${gameInfo.description}</div>
-                    `;
-                    
-                    gameItem.addEventListener('click', () => loadGame(gameInfo.filename, gameInfo.name));
-                    gamesListContainer.appendChild(gameItem);
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load game script: ${gameInfo.filename}`);
-                    // Still add the game item even if script fails
-                    const gameItem = document.createElement('div');
-                    gameItem.className = 'inventory-item';
-                    gameItem.style.cursor = 'pointer';
-                    gameItem.style.opacity = '0.5';
-                    gameItem.innerHTML = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
-                        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
-                        <div style="font-size: 0.7em; color: #ff6666; margin-top: 3px;">[ERROR]</div>
-                        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">Script load failed</div>
-                    `;
-                    gamesListContainer.appendChild(gameItem);
-                };
-                document.head.appendChild(script);
+                await loadSingleGame(gameInfo, gamesListContainer);
             } catch (error) {
                 console.error(`Failed to load game: ${gameInfo.filename}`, error);
+                // Still add the game item even if script fails
+                const gameItem = document.createElement('div');
+                gameItem.className = 'inventory-item';
+                gameItem.style.cursor = 'pointer';
+                gameItem.style.opacity = '0.5';
+                gameItem.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
+                    <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
+                    <div style="font-size: 0.7em; color: #ff6666; margin-top: 3px;">[ERROR]</div>
+                    <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">Load failed</div>
+                `;
+                gamesListContainer.appendChild(gameItem);
             }
         }
         
@@ -248,32 +320,43 @@ function loadGame(gameFile, gameName) {
         
         // Initialize the appropriate game based on the filename
         try {
-            switch (gameFile) {
-                case 'holotape-tetris.js':
-                    if (typeof tetrisGame !== 'undefined') {
-                        tetrisGame.init(gameId);
-                        currentGame = tetrisGame;
-                    }
-                    break;
-                case 'atomic-command.js':
-                    if (typeof atomicGame !== 'undefined') {
-                        atomicGame.init(gameId);
-                        currentGame = atomicGame;
-                    }
-                    break;
-                case 'wasteland-pong.js':
-                    if (typeof pongGame !== 'undefined') {
-                        pongGame.init(gameId);
-                        currentGame = pongGame;
-                    }
-                    break;
-                default:
+            console.log(`Loading game: ${gameFile}`);
+            console.log('Available game instances:', Object.keys(gameInstances));
+            const gameInstance = gameInstances[gameFile];
+            if (gameInstance && typeof gameInstance.init === 'function') {
+                console.log('Using stored game instance');
+                gameInstance.init(gameId);
+                currentGame = gameInstance;
+            } else {
+                console.log('Game instance not found in storage, trying fallback...');
+                // Fallback to global variables
+                let fallbackInstance = null;
+                switch (gameFile) {
+                    case 'holotape-tetris.js':
+                        fallbackInstance = typeof tetrisGame !== 'undefined' ? tetrisGame : null;
+                        break;
+                    case 'atomic-command.js':
+                        fallbackInstance = typeof atomicGame !== 'undefined' ? atomicGame : null;
+                        break;
+                    case 'wasteland-pong.js':
+                        fallbackInstance = typeof pongGame !== 'undefined' ? pongGame : null;
+                        break;
+                }
+                
+                console.log('Fallback instance:', fallbackInstance);
+                if (fallbackInstance && typeof fallbackInstance.init === 'function') {
+                    console.log('Using fallback instance');
+                    fallbackInstance.init(gameId);
+                    currentGame = fallbackInstance;
+                } else {
+                    console.log('No fallback instance found');
                     gameContainer.innerHTML = `
                         <div style="text-align: center; color: #ff6666; padding: 20px;">
                             ERROR: HOLOTAPE CORRUPTED<br>
                             <span style="font-size: 0.8em;">Unable to execute ${gameName}</span>
                         </div>
                     `;
+                }
             }
         } catch (error) {
             console.error('Error loading game:', error);
