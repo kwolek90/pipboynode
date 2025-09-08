@@ -1,4 +1,79 @@
 // Pipboy 3000 Terminal JavaScript
+
+// Tab loading system
+const tabsLoaded = {};
+
+async function loadTabContent(tabName) {
+    console.log(`Loading tab content: ${tabName}`);
+    
+    // Check if already loaded
+    if (tabsLoaded[tabName]) {
+        console.log(`Tab ${tabName} already loaded`);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`tabs/${tabName}.html`);
+        if (!response.ok) {
+            throw new Error(`Failed to load tab: ${response.status}`);
+        }
+        
+        const content = await response.text();
+        const tabElement = document.getElementById(tabName);
+        
+        if (tabElement) {
+            tabElement.innerHTML = content;
+            tabsLoaded[tabName] = true;
+            console.log(`Tab ${tabName} loaded successfully`);
+            
+            // Reinitialize tab-specific functionality
+            if (tabName === 'stat') {
+                initializeStatAnimations();
+            } else if (tabName === 'inv') {
+                initializeInventoryItems();
+            } else if (tabName === 'games') {
+                initializeGamesTab();
+            }
+        }
+    } catch (error) {
+        console.error(`Error loading tab ${tabName}:`, error);
+        const tabElement = document.getElementById(tabName);
+        if (tabElement) {
+            tabElement.innerHTML = `
+                <div style="text-align: center; color: #ff6666; padding: 20px;">
+                    ERROR: Failed to load tab content<br>
+                    <span style="font-size: 0.8em;">${error.message}</span>
+                </div>
+            `;
+        }
+    }
+}
+
+// Initialize stat animations
+function initializeStatAnimations() {
+    setTimeout(() => {
+        document.querySelectorAll('.progress-fill').forEach(fill => {
+            const width = fill.style.width;
+            fill.style.width = '0%';
+            setTimeout(() => {
+                fill.style.width = width;
+            }, 100);
+        });
+    }, 100);
+}
+
+// Initialize inventory items
+function initializeInventoryItems() {
+    document.querySelectorAll('.inventory-item').forEach(item => {
+        item.addEventListener('click', function() {
+            this.style.background = 'rgba(0, 255, 0, 0.3)';
+            setTimeout(() => {
+                this.style.background = 'rgba(0, 255, 0, 0.05)';
+            }, 200);
+        });
+    });
+}
+
 // DateTime update
 function updateDateTime() {
     const now = new Date();
@@ -43,29 +118,24 @@ function toggleRadio() {
 }
 
 // Inventory item interaction
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.inventory-item').forEach(item => {
-        item.addEventListener('click', function() {
-            this.style.background = 'rgba(0, 255, 0, 0.3)';
-            setTimeout(() => {
-                this.style.background = 'rgba(0, 255, 0, 0.05)';
-            }, 200);
-        });
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM loaded, initializing Pipboy...');
+    
+    // Load all tabs
+    const tabs = ['stat', 'inv', 'data', 'map', 'radio', 'games'];
+    
+    // Load the active tab first (stat)
+    await loadTabContent('stat');
+    
+    // Load other tabs in background
+    tabs.filter(tab => tab !== 'stat').forEach(tab => {
+        loadTabContent(tab);
     });
     
-    // Initialize stat animations
+    // Initialize other features after a small delay
     setTimeout(() => {
-        document.querySelectorAll('.progress-fill').forEach(fill => {
-            const width = fill.style.width;
-            fill.style.width = '0%';
-            setTimeout(() => {
-                fill.style.width = width;
-            }, 100);
-        });
+        console.log('Initializing additional features...');
     }, 500);
-    
-    // Initialize games on page load
-    loadGames();
 });
 
 // Sound effects (visual feedback)
