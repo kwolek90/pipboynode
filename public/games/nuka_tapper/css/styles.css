@@ -1,0 +1,181 @@
+#stage {
+  width: 800px;
+  height: 750px;
+  background-image: url('../img/bkg.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin:0px;
+  padding:0px;
+  position:absolute;
+  top:0px;
+  left:0px;
+}
+
+#startButton {
+  background-color: green;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 24px;
+  left: 320px;
+  padding: 15px;
+  position: absolute;
+  text-align: center;
+  top: 300px;
+  z-index: 10000;
+}
+
+#replay {
+  background-color: green;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 24px;
+  padding: 15px;
+  text-align: center;
+}
+
+#closingscreen {
+  background: rgba(255,255,255, 0.8);
+  font-family: sans-serif;
+  height: 200px;
+  left: 100px;
+  position: absolute;
+  text-align: center;
+  top: 250px;
+  width: 580px;
+}
+
+#closingscreen p {
+  font-size: 24px;
+}
+
+#score {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  left: 20px;
+  position: absolute;
+  z-index: 9999;
+}
+
+#tap1,
+#tap2,
+#tap3,
+#tap4 {
+  border: none;
+  height: 110px;
+  opacity: 0;
+  position: absolute;
+  width: 100px;
+  z-index: 9999;
+}
+
+#bar1,
+#bar2,
+#bar3,
+#bar4 {
+  background-color: orange;
+  border: none;
+  height: 70px;
+  opacity: 0.2;
+  position: absolute;
+  width: 600px;
+}
+
+#bar1 {
+  left: 45px;
+  top: 630px;
+  width: 620px;
+}
+
+#bar2 {
+  left: 95px;
+  top: 478px;
+  width: 525px;
+}
+
+#bar3 {
+  left: 140px;
+  top: 329px;
+  width: 430px;
+}
+
+#bar4 {
+  left: 190px;
+  top: 180px;
+  width: 330px;
+}
+
+#tap1 {
+  left: 690px;
+  top: 550px;
+}
+
+#tap2 {
+  left: 650px;
+  top: 400px;
+}
+
+#tap3 {
+  left: 600px;
+  top: 250px;
+}
+
+#tap4 {
+  left: 550px;
+  top: 100px;
+}
+
+.customerA,
+.customerB,
+.customerC,
+.customerD {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+}
+
+.customerA {
+  top: 125px;
+}
+
+.customerB {
+  top: 275px;
+}
+
+.customerC {
+  top: 425px;
+}
+
+.customerD {
+  top: 575px;
+}
+
+#bartender {
+  background-image: url('../img/bartender.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  left: 665px;
+  position: relative;
+  top: 580px;
+  width: 103px;
+  height: 120px;
+  z-index: 999;
+}
+
+#glass {
+  background-image: url('../img/beer.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  width: 40px;
+  height: 40px;
+  left: -30px;
+  top: 5px;
+  position: relative;
+}
+
+
+#div1 { width: 200px; height: 50px; background-color: pink; display: none;}
+#div2 { width: 400px; height: 100px; background-color: green; display: none;}
+#div3 { width: 100px; height: 80px; background-color: blue; display: none;}

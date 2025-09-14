@@ -1,0 +1,20 @@
+{
+  "name": "ATOMIC COMMAND",
+  "description": "Defend your cities from incoming nuclear missiles in this strategic defense simulator",
+  "version": "v2.0.0",
+  "author": "ROBCO INDUSTRIES",
+  "classification": "STRATEGY/DEFENSE",
+  "status": "OPERATIONAL",
+  "type": "STRATEGY",
+  "difficulty": "HARD",
+  "players": "1",
+  "mainScript": "atomic-command.js",
+  "controls": {
+    "mouse": "Aim and fire anti-missile batteries",
+    "space": "Pause game",
+    "r": "Restart level"
+  },
+  "requirements": "Pip-Boy 3000 MK IV or higher",
+  "fileSize": "18KB",
+  "lastModified": "2077-10-23"
+}

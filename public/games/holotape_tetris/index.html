@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holotape Tetris - Vault-Tec Entertainment</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            text-align: center;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            background: rgba(0, 255, 0, 0.05);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .info {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+        
+        #game-canvas {
+            border: 2px solid #00ff00;
+            background: #001100;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            margin-top: 20px;
+        }
+        
+        button {
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .score {
+            margin-top: 15px;
+            font-size: 18px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        
+        .instructions kbd {
+            background: rgba(0, 255, 0, 0.2);
+            padding: 2px 6px;
+            border: 1px solid #00ff00;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>HOLOTAPE TETRIS</h1>
+        <div class="info">VAULT-TEC ENTERTAINMENT DIVISION</div>
+        
+        <canvas id="game-canvas" width="300" height="600"></canvas>
+        
+        <div class="controls">
+            <button id="start-btn">START GAME</button>
+            <button id="pause-btn">PAUSE</button>
+            <button id="reset-btn">RESET</button>
+        </div>
+        
+        <div class="score">
+            SCORE: <span id="score">0</span> | 
+            LINES: <span id="lines">0</span> | 
+            LEVEL: <span id="level">1</span>
+        </div>
+        
+        <div class="instructions">
+            <strong>CONTROLS:</strong><br>
+            <kbd>←</kbd> <kbd>→</kbd> Move | 
+            <kbd>↓</kbd> Soft Drop | 
+            <kbd>↑</kbd> Rotate | 
+            <kbd>SPACE</kbd> Hard Drop
+        </div>
+    </div>
+    
+    <script src="holotape-tetris.js"></script>
+    <script>
+        // Initialize the game when page loads
+        window.addEventListener('load', function() {
+            if (typeof tetrisGame !== 'undefined' && tetrisGame.init) {
+                // Create a container div for the game
+                const container = document.createElement('div');
+                container.id = 'tetris-container';
+                document.querySelector('.game-container').appendChild(container);
+                
+                // Initialize the game
+                tetrisGame.init('tetris-container');
+            }
+        });
+    </script>
+</body>
+</html>

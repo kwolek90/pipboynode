@@ -1,0 +1,10 @@
+#stage {
+  width:480px;
+  height:512px;
+  background-image: url('/img/bkg.png');
+  margin:0px;
+  padding:0px;
+  position:absolute;
+  top:0px;
+  left:0px;
+}

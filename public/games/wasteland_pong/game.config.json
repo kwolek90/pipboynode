@@ -1,0 +1,22 @@
+{
+  "name": "WASTELAND PONG",
+  "description": "Classic paddle game adapted for post-nuclear entertainment",
+  "version": "v1.0.0",
+  "author": "VAULT-TEC ENTERTAINMENT",
+  "classification": "ARCADE/CLASSIC",
+  "status": "OPERATIONAL",
+  "type": "ARCADE",
+  "difficulty": "EASY",
+  "players": "1-2",
+  "mainScript": "wasteland-pong.js",
+  "controls": {
+    "w": "Player 1 Up",
+    "s": "Player 1 Down",
+    "up": "Player 2 Up",
+    "down": "Player 2 Down",
+    "space": "Start/Pause"
+  },
+  "requirements": "Pip-Boy 3000 MK IV or higher",
+  "fileSize": "8KB",
+  "lastModified": "2077-10-23"
+}

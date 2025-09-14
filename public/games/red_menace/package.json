@@ -1,0 +1,16 @@
+{
+  "name": "donkey_kong_js",
+  "version": "1.0.0",
+  "description": "JavaScript implementation of the arcade classic Donkey Kong",
+  "main": "index.js",
+  "scripts": {
+    "webpack": "webpack --mode=development --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ivo Pavlov",
+  "license": "ISC",
+  "dependencies": {
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
+  }
+}

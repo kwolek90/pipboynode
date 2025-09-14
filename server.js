@@ -18,38 +18,82 @@ app.get('/api/games', (req, res) => {
     const gamesPath = path.join(__dirname, 'public', 'games');
     
     try {
-        const gameFiles = fs.readdirSync(gamesPath)
-            .filter(file => file.endsWith('.js'))
-            .map(file => {
-                const filePath = path.join(gamesPath, file);
-                const content = fs.readFileSync(filePath, 'utf8');
-                
-                // Extract game info from the file
-                let gameInfo = {
-                    filename: file,
-                    name: file.replace('.js', '').toUpperCase().replace('-', ' '),
-                    description: 'Vault-Tec Entertainment Program',
-                    version: 'v1.0.0',
-                    author: 'VAULT-TEC INDUSTRIES',
-                    classification: 'RECREATION',
-                    status: 'OPERATIONAL'
-                };
-                
-                // Try to parse gameInfo from the file
-                const gameInfoMatch = content.match(/const gameInfo = ({[\s\S]*?});/);
-                if (gameInfoMatch) {
+        const games = [];
+        const gameDirs = fs.readdirSync(gamesPath, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory());
+        
+        for (const dir of gameDirs) {
+            const gameDirPath = path.join(gamesPath, dir.name);
+            
+            // Default game info
+            let gameInfo = {
+                id: dir.name,
+                name: dir.name.replace(/_/g, ' ').toUpperCase(),
+                description: 'Vault-Tec Entertainment Program',
+                version: 'v1.0.0',
+                author: 'VAULT-TEC INDUSTRIES',
+                classification: 'RECREATION',
+                status: 'OPERATIONAL',
+                type: 'ARCADE',
+                difficulty: 'NORMAL',
+                players: '1',
+                hasIndex: false,
+                mainScript: null,
+                thumbnail: null
+            };
+            
+            // Check for game.config.json
+            const configPath = path.join(gameDirPath, 'game.config.json');
+            if (fs.existsSync(configPath)) {
+                try {
+                    const configContent = fs.readFileSync(configPath, 'utf8');
+                    const config = JSON.parse(configContent);
+                    gameInfo = { ...gameInfo, ...config };
+                } catch (e) {
+                    console.log(`Could not parse config for ${dir.name}:`, e.message);
+                }
+            }
+            
+            // Check for index.html
+            const indexPath = path.join(gameDirPath, 'index.html');
+            gameInfo.hasIndex = fs.existsSync(indexPath);
+            
+            // Find main JavaScript file if not specified
+            if (!gameInfo.mainScript) {
+                const jsFiles = fs.readdirSync(gameDirPath)
+                    .filter(file => file.endsWith('.js'));
+                if (jsFiles.length > 0) {
+                    gameInfo.mainScript = jsFiles[0];
+                    
+                    // Try to extract gameInfo from JS file
                     try {
-                        const extractedInfo = eval('(' + gameInfoMatch[1] + ')');
-                        gameInfo = { ...gameInfo, ...extractedInfo, filename: file };
+                        const jsPath = path.join(gameDirPath, jsFiles[0]);
+                        const jsContent = fs.readFileSync(jsPath, 'utf8');
+                        const gameInfoMatch = jsContent.match(/const gameInfo = ({[\s\S]*?});/);
+                        if (gameInfoMatch) {
+                            try {
+                                const extractedInfo = eval('(' + gameInfoMatch[1] + ')');
+                                gameInfo = { ...gameInfo, ...extractedInfo };
+                            } catch (e) {
+                                // Ignore parse errors
+                            }
+                        }
                     } catch (e) {
-                        console.log('Could not parse gameInfo from', file);
+                        console.log(`Could not read JS file for ${dir.name}:`, e.message);
                     }
                 }
-                
-                return gameInfo;
-            });
+            }
+            
+            // Add relative path for loading
+            gameInfo.path = `games/${dir.name}/`;
+            
+            games.push(gameInfo);
+        }
         
-        res.json({ games: gameFiles, count: gameFiles.length });
+        res.json({ 
+            games: games.sort((a, b) => a.name.localeCompare(b.name)), 
+            count: games.length 
+        });
     } catch (error) {
         console.error('Error reading games directory:', error);
         res.json({ games: [], count: 0, error: 'Could not access games directory' });

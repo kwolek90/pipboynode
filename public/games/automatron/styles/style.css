@@ -1,0 +1,83 @@
+@font-face {
+    font-family: "Robotron";
+    src: url("../assets/fonts/robotron_font.ttf");
+    font-style: normal;
+    font-display: swap;
+}
+body {
+    margin: 0;
+    font-family: "Robotron", sans-serif;
+    background-color: black;
+}
+body * { /*  !  !  !  !  ! */
+    user-select: none;
+}
+
+/* UI, canvas elements */
+#game-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Top and Bottom UI Info */
+#top-info, 
+#bottom-info {
+    height: 34px;
+    display: flex;
+    pointer-events: none;
+    justify-content: space-between;
+}
+#score-lives-container {
+    display: flex;
+    margin-left: 12px;
+    align-items: center;
+}
+#score, 
+#wave, 
+#fps-container, 
+#surplus-lives-indicator {
+    color: white;
+    font-size: 24px;
+    align-self: center;
+}
+#score {
+    display: flex;
+    justify-content: flex-end;
+    width: 138px;
+    margin: 0px 20px 0px 0px;
+}
+#lives {
+    height: 90%;
+    display: flex;
+}
+.life-indicator {
+    width: auto;
+    height: auto;
+    padding-top: 2px;
+    padding-right: 10px;
+    height: inherit;
+}
+#fps-container {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+}
+#fps-string {
+    margin-right: 5px;
+}
+#wave {
+    margin: auto;
+}
+
+/* Canvas */
+canvas {
+    margin: auto;
+    display: block;
+    width: 876px;  /*  !  !  !  !  ! */
+    height: 720px; /*  !  !  !  !  ! */
+    /* cursor: crosshair; */
+    background-color: black;
+    border: 7px solid rgb(255, 110, 0);
+}

@@ -1,0 +1,22 @@
+{
+  "name": "HOLOTAPE TETRIS",
+  "description": "Classic block-stacking puzzle game recovered from pre-war arcade machines",
+  "version": "v1.2.1",
+  "author": "VAULT-TEC ENTERTAINMENT",
+  "classification": "PUZZLE/ARCADE",
+  "status": "OPERATIONAL",
+  "type": "PUZZLE",
+  "difficulty": "PROGRESSIVE",
+  "players": "1",
+  "mainScript": "holotape-tetris.js",
+  "controls": {
+    "left": "← Move Left",
+    "right": "→ Move Right", 
+    "down": "↓ Soft Drop",
+    "up": "↑ Rotate",
+    "space": "Hard Drop"
+  },
+  "requirements": "Pip-Boy 3000 MK IV or higher",
+  "fileSize": "12KB",
+  "lastModified": "2077-10-23"
+}
