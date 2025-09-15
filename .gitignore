@@ -178,7 +178,8 @@ temp/
 .cache
 .parcel-cache
 
-# Pipboy specific
-# Uncomment if you want to ignore specific pipboy files
-# public/uploads/
-# public/saves/
+# Ignoruj wszystkie stacje radiowe poza example
+public/radio_stations/*
+!public/radio_stations/example/
+!public/radio_stations/example/example.json
+!public/radio_stations/example/example.mp3
