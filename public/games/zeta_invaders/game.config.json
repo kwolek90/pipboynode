@@ -8,7 +8,7 @@
   "type": "ARCADE",
   "difficulty": "PROGRESSIVE",
   "players": "1",
-  "mainScript": "Scripts/script.js",
+  "mainScript": "main.js",
   "hasIndex": true,
   "controls": {
     "left/right": "Move ship",

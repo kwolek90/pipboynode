@@ -8,7 +8,7 @@
   "type": "STRATEGY",
   "difficulty": "HARD",
   "players": "1",
-  "mainScript": "atomic-command.js",
+  "mainScript": "main.js",
   "controls": {
     "mouse": "Aim and fire anti-missile batteries",
     "space": "Pause game",

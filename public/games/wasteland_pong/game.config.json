@@ -8,7 +8,7 @@
   "type": "ARCADE",
   "difficulty": "EASY",
   "players": "1-2",
-  "mainScript": "wasteland-pong.js",
+  "mainScript": "main.js",
   "controls": {
     "w": "Player 1 Up",
     "s": "Player 1 Down",

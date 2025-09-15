@@ -16,16 +16,13 @@ app.get('/', (req, res) => {
 // API endpoint to list available games
 app.get('/api/games', (req, res) => {
     const gamesPath = path.join(__dirname, 'public', 'games');
-    
     try {
         const games = [];
         const gameDirs = fs.readdirSync(gamesPath, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory());
-        
         for (const dir of gameDirs) {
             const gameDirPath = path.join(gamesPath, dir.name);
-            
-            // Default game info
+            // Domyślne dane gry
             let gameInfo = {
                 id: dir.name,
                 name: dir.name.replace(/_/g, ' ').toUpperCase(),
@@ -38,11 +35,10 @@ app.get('/api/games', (req, res) => {
                 difficulty: 'NORMAL',
                 players: '1',
                 hasIndex: false,
-                mainScript: null,
+                mainScript: 'main.js',
                 thumbnail: null
             };
-            
-            // Check for game.config.json
+            // Wczytaj game.config.json jeśli istnieje
             const configPath = path.join(gameDirPath, 'game.config.json');
             if (fs.existsSync(configPath)) {
                 try {
@@ -53,44 +49,16 @@ app.get('/api/games', (req, res) => {
                     console.log(`Could not parse config for ${dir.name}:`, e.message);
                 }
             }
-            
-            // Check for index.html
+            // Sprawdź index.html
             const indexPath = path.join(gameDirPath, 'index.html');
             gameInfo.hasIndex = fs.existsSync(indexPath);
-            
-            // Find main JavaScript file if not specified
-            if (!gameInfo.mainScript) {
-                const jsFiles = fs.readdirSync(gameDirPath)
-                    .filter(file => file.endsWith('.js'));
-                if (jsFiles.length > 0) {
-                    gameInfo.mainScript = jsFiles[0];
-                    
-                    // Try to extract gameInfo from JS file
-                    try {
-                        const jsPath = path.join(gameDirPath, jsFiles[0]);
-                        const jsContent = fs.readFileSync(jsPath, 'utf8');
-                        const gameInfoMatch = jsContent.match(/const gameInfo = ({[\s\S]*?});/);
-                        if (gameInfoMatch) {
-                            try {
-                                const extractedInfo = eval('(' + gameInfoMatch[1] + ')');
-                                gameInfo = { ...gameInfo, ...extractedInfo };
-                            } catch (e) {
-                                // Ignore parse errors
-                            }
-                        }
-                    } catch (e) {
-                        console.log(`Could not read JS file for ${dir.name}:`, e.message);
-                    }
-                }
-            }
-            
-            // Add relative path for loading
+            // Ustaw ścieżkę względną
             gameInfo.path = `games/${dir.name}/`;
-            
+            // mainScript zawsze main.js
+            gameInfo.mainScript = 'main.js';
             games.push(gameInfo);
         }
-        
-        res.json({ 
+        res.json({
             games: games.sort((a, b) => a.name.localeCompare(b.name)), 
             count: games.length 
         });

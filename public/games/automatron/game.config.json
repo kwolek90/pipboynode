@@ -8,7 +8,7 @@
   "type": "ARCADE",
   "difficulty": "HARD",
   "players": "1",
-  "mainScript": "modules/main.js",
+  "mainScript": "main.js",
   "hasIndex": true,
   "controls": {
     "wasd": "Movement",

@@ -8,7 +8,7 @@
   "type": "PUZZLE",
   "difficulty": "PROGRESSIVE",
   "players": "1",
-  "mainScript": "holotape-tetris.js",
+  "mainScript": "main.js",
   "controls": {
     "left": "← Move Left",
     "right": "→ Move Right", 
