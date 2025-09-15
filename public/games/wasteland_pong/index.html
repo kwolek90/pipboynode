@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wasteland Pong</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        #game-canvas, canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 1.2em;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .error {
+            color: #ff6666;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .controls-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid #00ff00;
+            font-size: 0.8em;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .controls-overlay:hover {
+            opacity: 1;
+        }
+        
+        .control-item {
+            margin: 2px 0;
+        }
+        
+        .key {
+            color: #ffff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="loading" id="loading-message">
+            LOADING WASTELAND PONG...<br>
+            <span style="font-size: 0.8em; opacity: 0.7;">Initializing game engine...</span>
+        </div>
+        <canvas id="game-canvas" style="display: none;"></canvas>
+    </div>
+    
+    <div class="controls-overlay" id="controls">
+        <div style="font-weight: bold; margin-bottom: 5px;">CONTROLS:</div>
+        <div class="control-item"><span class="key">W</span>: Player 1 Up</div>
+        <div class="control-item"><span class="key">S</span>: Player 1 Down</div>
+        <div class="control-item"><span class="key">↑</span>: Player 2 Up</div>
+        <div class="control-item"><span class="key">↓</span>: Player 2 Down</div>
+        <div class="control-item"><span class="key">SPACE</span>: Start/Pause</div>
+        <div class="control-item"><span class="key">ESC</span>: Exit Game</div>
+    </div>
+    
+    <script src="wasteland-pong.js"></script>
+    <script>
+        // Hide loading message and show canvas when game is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('loading-message').style.display = 'none';
+                document.getElementById('game-canvas').style.display = 'block';
+            }, 500);
+        });
+        
+        // Handle escape key to return to menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (window.parent !== window) {
+                    // We're in an iframe, tell parent to close
+                    window.parent.postMessage({ action: 'closeGame' }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "AUTOMATRON",
+  "description": "Battle against hostile automatrons in this action-packed shooter",
+  "version": "v2.1.0",
+  "author": "VAULT-TEC ENTERTAINMENT",
+  "classification": "ACTION/SHOOTER",
+  "status": "OPERATIONAL",
+  "type": "ARCADE",
+  "difficulty": "HARD",
+  "players": "1",
+  "mainScript": "modules/main.js",
+  "hasIndex": true,
+  "controls": {
+    "wasd": "Movement",
+    "mouse": "Aim",
+    "click": "Fire",
+    "space": "Special Ability"
+  },
+  "requirements": "Pip-Boy 3000 MK IV or higher",
+  "fileSize": "256KB",
+  "lastModified": "2077-10-23"
+}

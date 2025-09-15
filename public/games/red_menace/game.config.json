@@ -1,0 +1,21 @@
+{
+  "name": "RED MENACE",
+  "description": "Classic platformer - Save the princess from the communist gorilla",
+  "version": "v1.0.3",
+  "author": "VAULT-TEC ENTERTAINMENT",
+  "classification": "PLATFORMER",
+  "status": "OPERATIONAL",
+  "type": "ARCADE",
+  "difficulty": "NORMAL",
+  "players": "1",
+  "mainScript": "main.js",
+  "hasIndex": true,
+  "controls": {
+    "left/right": "Move",
+    "up": "Climb",
+    "space": "Jump"
+  },
+  "requirements": "Pip-Boy 3000 MK III or higher",
+  "fileSize": "145KB",
+  "lastModified": "2077-08-01"
+}

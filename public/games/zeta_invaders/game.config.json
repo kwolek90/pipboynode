@@ -1,0 +1,21 @@
+{
+  "name": "ZETA INVADERS",
+  "description": "Defend Earth from the alien zetans in this space shooter",
+  "version": "v1.8.2",
+  "author": "VAULT-TEC ENTERTAINMENT",
+  "classification": "SHOOTER/ARCADE",
+  "status": "OPERATIONAL",
+  "type": "ARCADE",
+  "difficulty": "PROGRESSIVE",
+  "players": "1",
+  "mainScript": "Scripts/script.js",
+  "hasIndex": true,
+  "controls": {
+    "left/right": "Move ship",
+    "space": "Fire laser",
+    "p": "Pause game"
+  },
+  "requirements": "Pip-Boy 3000 MK III or higher",
+  "fileSize": "178KB",
+  "lastModified": "2077-10-01"
+}

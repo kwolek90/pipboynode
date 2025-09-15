@@ -85,7 +85,6 @@ function updateDateTime() {
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
-
 // Radio functionality
 const stations = [
     { freq: '105.7', name: 'DIAMOND CITY RADIO', song: 'Atom Bomb Baby' },
@@ -117,7 +116,290 @@ function toggleRadio() {
     document.getElementById('radio-toggle').textContent = radioPlaying ? 'PAUSE' : 'PLAY';
 }
 
-// Inventory item interaction
+// ========================================
+// GAMES FUNCTIONALITY
+// ========================================
+
+let availableGames = [];
+let currentGame = null;
+let currentGameFrame = null;
+
+// Load games from API
+async function loadGames() {
+    const gamesListContainer = document.getElementById('games-list');
+    
+    if (!gamesListContainer) return;
+    
+    gamesListContainer.innerHTML = '<div style="text-align: center; opacity: 0.7; padding: 20px;">SCANNING HOLOTAPES...</div>';
+    
+    try {
+        const response = await fetch('/api/games');
+        const data = await response.json();
+        
+        console.log('Games loaded:', data);
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        availableGames = data.games;
+        gamesListContainer.innerHTML = '';
+        
+        // Display all games
+        for (const gameInfo of availableGames) {
+            createGameItem(gameInfo, gamesListContainer);
+        }
+        
+    } catch (error) {
+        console.error('Failed to load games:', error);
+        gamesListContainer.innerHTML = `
+            <div style="text-align: center; color: #ff6666; padding: 20px;">
+                ERROR: HOLOTAPE READER MALFUNCTION<br>
+                <span style="font-size: 0.8em;">${error.message}</span>
+            </div>
+        `;
+    }
+}
+
+// Create game item UI element
+function createGameItem(gameInfo, container) {
+    const gameItem = document.createElement('div');
+    gameItem.className = 'inventory-item';
+    gameItem.style.cursor = 'pointer';
+    
+    // Determine display status
+    const statusColor = gameInfo.status === 'OPERATIONAL' ? '#00ff00' : 
+                       gameInfo.status === 'CORRUPTED' ? '#ff6666' : '#ffaa00';
+    
+    gameItem.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
+        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification || 'ARCADE'}</div>
+        <div style="font-size: 0.7em; color: ${statusColor}; margin-top: 3px;">[${gameInfo.status}]</div>
+        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">${gameInfo.description}</div>
+        ${gameInfo.players ? `<div style="font-size: 0.6em; opacity: 0.5; margin-top: 2px;">Players: ${gameInfo.players}</div>` : ''}
+    `;
+    
+    gameItem.addEventListener('click', () => loadGame(gameInfo));
+    container.appendChild(gameItem);
+}
+
+// Load and run a game
+function loadGame(gameInfo) {
+    console.log('Loading game:', gameInfo);
+    
+    const gameContainer = document.getElementById('game-container');
+    if (!gameContainer) {
+        console.error('Game container not found!');
+        return;
+    }
+    
+    // Stop current game if running
+    if (currentGameFrame) {
+        try {
+            currentGameFrame.remove();
+            currentGameFrame = null;
+        } catch (e) {
+            console.error('Error removing current game:', e);
+        }
+    }
+    
+    // Clear and show loading message
+    gameContainer.innerHTML = `
+        <div style="text-align: center; color: #00ff00; padding: 20px;">
+            <div style="margin-bottom: 10px;">INITIALIZING ${gameInfo.name}...</div>
+            <div style="font-size: 0.8em; opacity: 0.7;">Reading holotape data...</div>
+        </div>
+    `;
+    
+    // Determine how to load the game
+    setTimeout(() => {
+        try {
+            if (gameInfo.hasIndex) {
+                // Load games with their own index.html in an iframe
+                loadGameInIframe(gameInfo, gameContainer);
+            } else if (gameInfo.mainScript) {
+                // Load games with just a main script
+                loadGameScript(gameInfo, gameContainer);
+            } else {
+                throw new Error('No valid game entry point found');
+            }
+        } catch (error) {
+            console.error('Error loading game:', error);
+            gameContainer.innerHTML = `
+                <div style="text-align: center; color: #ff6666; padding: 20px;">
+                    ERROR: HOLOTAPE CORRUPTED<br>
+                    <span style="font-size: 0.8em;">Unable to execute ${gameInfo.name}</span><br>
+                    <span style="font-size: 0.7em; margin-top: 10px; display: block; opacity: 0.7;">${error.message}</span>
+                </div>
+            `;
+        }
+    }, 500);
+    
+    // Add visual feedback
+    document.querySelectorAll('.inventory-item').forEach(item => {
+        item.style.background = 'rgba(0, 255, 0, 0.05)';
+    });
+    
+    if (event && event.target) {
+        const clickedItem = event.target.closest('.inventory-item');
+        if (clickedItem) {
+            clickedItem.style.background = 'rgba(0, 255, 0, 0.2)';
+        }
+    }
+}
+
+// Load game in iframe (for games with index.html)
+function loadGameInIframe(gameInfo, container) {
+    console.log('Loading game in iframe:', gameInfo.name);
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '500px';
+    iframe.style.border = '2px solid #00ff00';
+    iframe.style.background = '#000';
+    iframe.src = `${gameInfo.path}index.html`;
+    
+    // Add controls bar
+    container.innerHTML = `
+        <div style="background: rgba(0, 255, 0, 0.1); padding: 10px; margin-bottom: 10px; border: 1px solid #00ff00;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: bold;">${gameInfo.name}</div>
+                <button onclick="stopCurrentGame()" style="
+                    background: #ff6666;
+                    color: #000;
+                    border: none;
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    font-family: monospace;
+                    font-weight: bold;
+                ">EXIT GAME</button>
+            </div>
+            ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
+        </div>
+    `;
+    
+    container.appendChild(iframe);
+    currentGameFrame = iframe;
+    currentGame = gameInfo;
+}
+
+// Load game script directly (for games with just JS files)
+function loadGameScript(gameInfo, container) {
+    console.log('Loading game script:', gameInfo.mainScript);
+    
+    // Create a container for the game
+    const gameDiv = document.createElement('div');
+    gameDiv.id = 'game-instance-' + Date.now();
+    gameDiv.style.width = '100%';
+    gameDiv.style.minHeight = '400px';
+    
+    // Add controls bar
+    container.innerHTML = `
+        <div style="background: rgba(0, 255, 0, 0.1); padding: 10px; margin-bottom: 10px; border: 1px solid #00ff00;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: bold;">${gameInfo.name}</div>
+                <button onclick="stopCurrentGame()" style="
+                    background: #ff6666;
+                    color: #000;
+                    border: none;
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    font-family: monospace;
+                    font-weight: bold;
+                ">EXIT GAME</button>
+            </div>
+            ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
+        </div>
+    `;
+    
+    container.appendChild(gameDiv);
+    
+    // Try to load and initialize the game
+    const script = document.createElement('script');
+    script.src = `${gameInfo.path}${gameInfo.mainScript}`;
+    script.onload = () => {
+        console.log('Game script loaded');
+        
+        // Try to initialize the game with various methods
+        setTimeout(() => {
+            try {
+                // Try common initialization patterns
+                if (typeof window.initGame === 'function') {
+                    window.initGame(gameDiv.id);
+                } else if (typeof window.startGame === 'function') {
+                    window.startGame(gameDiv.id);
+                } else if (typeof window.Game === 'function') {
+                    new window.Game(gameDiv.id);
+                } else {
+                    // If no standard init found, just hope the game auto-starts
+                    console.log('No standard init function found, game may auto-start');
+                }
+            } catch (error) {
+                console.error('Error initializing game:', error);
+            }
+        }, 100);
+    };
+    
+    script.onerror = () => {
+        console.error('Failed to load game script');
+        container.innerHTML = `
+            <div style="text-align: center; color: #ff6666; padding: 20px;">
+                ERROR: HOLOTAPE READ ERROR<br>
+                <span style="font-size: 0.8em;">Could not load ${gameInfo.name}</span>
+            </div>
+        `;
+    };
+    
+    document.head.appendChild(script);
+    currentGame = gameInfo;
+}
+
+// Create controls display
+function createControlsDisplay(controls) {
+    if (!controls || typeof controls !== 'object') return '';
+    
+    const controlsHtml = Object.entries(controls).map(([key, desc]) => 
+        `<span style="margin-right: 15px; font-size: 0.8em; opacity: 0.7;">${key.toUpperCase()}: ${desc}</span>`
+    ).join('');
+    
+    return `<div style="margin-top: 5px;">${controlsHtml}</div>`;
+}
+
+// Stop current game
+window.stopCurrentGame = function() {
+    if (currentGameFrame) {
+        currentGameFrame.remove();
+        currentGameFrame = null;
+    }
+    
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.innerHTML = `
+            <div style="text-align: center; opacity: 0.7; padding: 40px;">
+                SELECT A PROGRAM TO EXECUTE
+            </div>
+        `;
+    }
+    
+    currentGame = null;
+    
+    // Reset all game items background
+    document.querySelectorAll('.inventory-item').forEach(item => {
+        item.style.background = 'rgba(0, 255, 0, 0.05)';
+    });
+};
+
+// Initialize games tab
+function initializeGamesTab() {
+    if (!availableGames || availableGames.length === 0) {
+        loadGames();
+    }
+}
+
+// ========================================
+// INITIALIZATION
+// ========================================
+
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded, initializing Pipboy...');
     
@@ -157,454 +439,6 @@ document.addEventListener('click', function() {
         flash.remove();
     }, 50);
 });
-
-// Custom cursor glow effect
-document.addEventListener('mousemove', function(e) {
-    // Add subtle glow effect at mouse position
-    const glow = document.createElement('div');
-    glow.style.position = 'absolute';
-    glow.style.left = e.clientX + 'px';
-    glow.style.top = e.clientY + 'px';
-    glow.style.width = '10px';
-    glow.style.height = '10px';
-    glow.style.background = 'rgba(0, 255, 0, 0.5)';
-    glow.style.borderRadius = '50%';
-    glow.style.pointerEvents = 'none';
-    glow.style.zIndex = '150';
-    glow.style.transform = 'translate(-50%, -50%)';
-    
-    document.body.appendChild(glow);
-    
-    setTimeout(() => {
-        glow.remove();
-    }, 100);
-});
-
-// Random data updates
-function updateRandomData() {
-    // Update radiation level randomly
-    const radiationLevels = ['LOW', 'MODERATE', 'HIGH', 'EXTREME'];
-    const radiationTexts = document.querySelectorAll('div');
-    radiationTexts.forEach(div => {
-        if (div.textContent && div.textContent.includes('RADIATION LEVEL:')) {
-            const randomLevel = radiationLevels[Math.floor(Math.random() * radiationLevels.length)];
-            div.textContent = `RADIATION LEVEL: ${randomLevel}`;
-        }
-    });
-    
-    // Update hostiles detected
-    const hostileCount = Math.floor(Math.random() * 6);
-    radiationTexts.forEach(div => {
-        if (div.textContent && div.textContent.includes('HOSTILES DETECTED:')) {
-            div.textContent = `HOSTILES DETECTED: ${hostileCount}`;
-        }
-    });
-}
-
-// Update random data every 30 seconds
-//setInterval(updateRandomData, 30000);
-
-// Console startup messages
-console.log('%c██████╗ ██╗██████╗ ██████╗  ██████╗ ██╗   ██╗', 'color: #00ff00; font-family: monospace;');
-console.log('%c██╔══██╗██║██╔══██╗██╔══██╗██╔═══██╗╚██╗ ██╔╝', 'color: #00ff00; font-family: monospace;');
-console.log('%c██████╔╝██║██████╔╝██████╔╝██║   ██║ ╚████╔╝ ', 'color: #00ff00; font-family: monospace;');
-console.log('%c██╔═══╝ ██║██╔═══╝ ██╔══██╗██║   ██║  ╚██╔╝  ', 'color: #00ff00; font-family: monospace;');
-console.log('%c██║     ██║██║     ██████╔╝╚██████╔╝   ██║   ', 'color: #00ff00; font-family: monospace;');
-console.log('%c╚═╝     ╚═╝╚═╝     ╚═════╝  ╚═════╝    ╚═╝   ', 'color: #00ff00; font-family: monospace;');
-console.log('%c3000 MK IV - VAULT-TEC INDUSTRIES © 2077', 'color: #00ff00; font-family: monospace;');
-console.log('%cTERMINAL INITIALIZED...', 'color: #00ff00; font-family: monospace;');
-
-// Games functionality
-let availableGames = [];
-let currentGame = null;
-let gameInstances = {}; // Store game instances by filename
-
-// Load games sequentially to avoid conflicts
-async function loadGamesSequentially(games, container) {
-    for (const gameInfo of games) {
-        try {
-            await loadSingleGame(gameInfo, container);
-        } catch (error) {
-            console.error(`Failed to load game: ${gameInfo.filename}`, error);
-            // Add error item
-            const gameItem = document.createElement('div');
-            gameItem.className = 'inventory-item';
-            gameItem.style.cursor = 'pointer';
-            gameItem.style.opacity = '0.5';
-            gameItem.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
-                <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
-                <div style="font-size: 0.7em; color: #ff6666; margin-top: 3px;">[ERROR]</div>
-                <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">Load failed</div>
-            `;
-            container.appendChild(gameItem);
-        }
-    }
-}
-
-// Load a single game script
-function loadSingleGame(gameInfo, container) {
-    return new Promise((resolve, reject) => {
-        // Check if script already exists
-        const existingScript = document.querySelector(`script[src="games/${gameInfo.filename}"]`);
-        if (existingScript) {
-            // Script already loaded, just create the UI element
-            createGameItem(gameInfo, container);
-            resolve();
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = `games/${gameInfo.filename}`;
-        script.onload = () => {
-            // Wait a bit for the script to fully initialize
-            setTimeout(() => {
-                const gameInstance = getGameInstance(gameInfo.filename);
-                if (gameInstance) {
-                    gameInstances[gameInfo.filename] = gameInstance;
-                }
-                // Always create the game item, even if instance not found
-                createGameItem(gameInfo, container);
-                resolve();
-            }, 200);
-        };
-        script.onerror = () => {
-            // Still create the game item even if script fails
-            createGameItem(gameInfo, container);
-            resolve();
-        };
-        document.head.appendChild(script);
-    });
-}
-
-// Get game instance based on filename
-function getGameInstance(filename) {
-    switch (filename) {
-        case 'holotape-tetris.js':
-            return typeof tetrisGame !== 'undefined' ? tetrisGame : null;
-        case 'atomic-command.js':
-            return typeof atomicGame !== 'undefined' ? atomicGame : null;
-        case 'wasteland-pong.js':
-            return typeof pongGame !== 'undefined' ? pongGame : null;
-        default:
-            return null;
-    }
-}
-
-// Create game item UI element
-function createGameItem(gameInfo, container) {
-    const gameItem = document.createElement('div');
-    gameItem.className = 'inventory-item';
-    gameItem.style.cursor = 'pointer';
-    gameItem.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
-        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
-        <div style="font-size: 0.7em; color: #00aa00; margin-top: 3px;">[${gameInfo.status}]</div>
-        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">${gameInfo.description}</div>
-    `;
-    
-    gameItem.addEventListener('click', () => loadGame(gameInfo.filename, gameInfo.name));
-    container.appendChild(gameItem);
-}
-
-// Load games from directory
-async function loadGames() {
-    const gamesListContainer = document.getElementById('games-list');
-    
-    if (!gamesListContainer) return;
-    
-    gamesListContainer.innerHTML = '<div style="text-align: center; opacity: 0.7; padding: 20px;">SCANNING HOLOTAPES...</div>';
-    
-    try {
-        // Fetch games from the API endpoint
-        const response = await fetch('/api/games');
-        const data = await response.json();
-        
-        console.log('Games API response:', data);
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        gamesListContainer.innerHTML = '';
-        
-        // Load all games at once
-        for (const gameInfo of data.games) {
-            try {
-                await loadSingleGame(gameInfo, gamesListContainer);
-            } catch (error) {
-                console.error(`Failed to load game: ${gameInfo.filename}`, error);
-                // Still add the game item even if script fails
-                createErrorGameItem(gameInfo, gamesListContainer, error.message);
-            }
-        }
-        
-        // Update available games array
-        availableGames = data.games;
-        
-    } catch (error) {
-        console.error('Failed to load games:', error);
-        gamesListContainer.innerHTML = `
-            <div style="text-align: center; color: #ff6666; padding: 20px;">
-                ERROR: HOLOTAPE READER MALFUNCTION<br>
-                <span style="font-size: 0.8em;">${error.message}</span>
-            </div>
-        `;
-    }
-}
-
-// Create error game item
-function createErrorGameItem(gameInfo, container, errorMsg) {
-    const gameItem = document.createElement('div');
-    gameItem.className = 'inventory-item';
-    gameItem.style.cursor = 'pointer';
-    gameItem.style.opacity = '0.5';
-    gameItem.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.name}</div>
-        <div style="font-size: 0.8em; opacity: 0.8;">${gameInfo.classification}</div>
-        <div style="font-size: 0.7em; color: #ff6666; margin-top: 3px;">[CORRUPTED]</div>
-        <div style="font-size: 0.6em; opacity: 0.6; margin-top: 2px;">${errorMsg}</div>
-    `;
-    
-    gameItem.addEventListener('click', () => {
-        const gameContainer = document.getElementById('game-container');
-        gameContainer.innerHTML = `
-            <div style="text-align: center; color: #ff6666; padding: 20px;">
-                ERROR: HOLOTAPE CORRUPTED<br>
-                <span style="font-size: 0.8em;">Unable to execute ${gameInfo.name}</span><br>
-                <span style="font-size: 0.7em; margin-top: 10px; display: block;">${errorMsg}</span>
-            </div>
-        `;
-    });
-    
-    container.appendChild(gameItem);
-}
-
-// Load and initialize a specific game
-function loadGame(gameFile, gameName) {
-    console.log('=== LOADGAME START ===');
-    console.log(`Loading game: ${gameFile} (${gameName})`);
-    
-    const gameContainer = document.getElementById('game-container');
-    console.log('Game container found:', gameContainer ? 'YES' : 'NO');
-    
-    if (!gameContainer) {
-        console.error('Game container not found!');
-        return;
-    }
-    
-    // Stop current game if running
-    if (currentGame && typeof currentGame.stop === 'function') {
-        try {
-            console.log('Stopping current game...');
-            currentGame.stop();
-            console.log('Current game stopped');
-        } catch (e) {
-            console.error('Error stopping current game:', e);
-        }
-    }
-    
-    gameContainer.innerHTML = `
-        <div style="text-align: center; color: #00ff00; padding: 20px;">
-            <div style="margin-bottom: 10px;">INITIALIZING ${gameName}...</div>
-            <div style="font-size: 0.8em; opacity: 0.7;">Reading holotape data...</div>
-        </div>
-    `;
-    
-    // Create a unique container ID for the game
-    const gameId = 'game-' + Date.now();
-    console.log('Generated game container ID:', gameId);
-    
-    setTimeout(() => {
-        console.log('=== INITIALIZATION PHASE ===');
-        
-        try {
-            // Create the game container div
-            gameContainer.innerHTML = `<div id="${gameId}" style="width: 100%; min-height: 400px;"></div>`;
-            console.log('Game container div created');
-            
-            // Verify the container was created
-            const createdContainer = document.getElementById(gameId);
-            console.log('Container verification:', createdContainer ? 'SUCCESS' : 'FAILED');
-            
-            // Try different ways to get the game instance
-            let gameInstance = null;
-            
-            // Method 1: Check stored instances
-            console.log('Method 1: Checking stored instances...');
-            console.log('Stored instances:', Object.keys(gameInstances));
-            if (gameInstances[gameFile]) {
-                gameInstance = gameInstances[gameFile];
-                console.log('Found game in stored instances:', gameInstance);
-            } else {
-                console.log('Not found in stored instances');
-            }
-            
-            // Method 2: Check global variables directly
-            if (!gameInstance) {
-                console.log('Method 2: Checking global variables...');
-                
-                // Also check window object
-                console.log('Checking window.tetrisGame:', typeof window.tetrisGame);
-                console.log('Checking global tetrisGame:', typeof tetrisGame);
-                
-                switch (gameFile) {
-                    case 'holotape-tetris.js':
-                        console.log('Looking for tetrisGame...');
-                        console.log('typeof tetrisGame:', typeof tetrisGame);
-                        console.log('typeof window.tetrisGame:', typeof window.tetrisGame);
-                        
-                        if (typeof window.tetrisGame !== 'undefined') {
-                            gameInstance = window.tetrisGame;
-                            console.log('Found window.tetrisGame');
-                        } else if (typeof tetrisGame !== 'undefined') {
-                            gameInstance = tetrisGame;
-                            console.log('Found global tetrisGame');
-                        }
-                        
-                        console.log('tetrisGame instance:', gameInstance);
-                        break;
-                    case 'atomic-command.js':
-                        if (typeof atomicGame !== 'undefined') {
-                            gameInstance = atomicGame;
-                            console.log('Found atomicGame globally');
-                        }
-                        break;
-                    case 'wasteland-pong.js':
-                        if (typeof pongGame !== 'undefined') {
-                            gameInstance = pongGame;
-                            console.log('Found pongGame globally');
-                        }
-                        break;
-                }
-            }
-            
-            // Method 3: Try to load the script if game instance not found
-            if (!gameInstance) {
-                console.log('Method 3: Game instance not found, loading script...');
-                loadGameScript(gameFile, gameId, gameName);
-                return;
-            }
-            
-            // Initialize the game
-            console.log('=== GAME INIT PHASE ===');
-            console.log('Game instance:', gameInstance);
-            console.log('Has init method:', typeof gameInstance.init === 'function');
-            
-            if (gameInstance && typeof gameInstance.init === 'function') {
-                console.log('Calling game.init() with container ID:', gameId);
-                gameInstance.init(gameId);
-                currentGame = gameInstance;
-                console.log('Game initialized successfully!');
-                console.log('Current game set to:', currentGame);
-            } else {
-                const errorMsg = gameInstance ? 
-                    'Game instance found but init method missing' : 
-                    'Game instance is null/undefined';
-                console.error(errorMsg);
-                throw new Error(errorMsg);
-            }
-            
-        } catch (error) {
-            console.error('=== ERROR IN GAME LOADING ===');
-            console.error('Error:', error);
-            console.error('Stack:', error.stack);
-            
-            gameContainer.innerHTML = `
-                <div style="text-align: center; color: #ff6666; padding: 20px;">
-                    SYSTEM ERROR: HOLOTAPE UNREADABLE<br>
-                    <span style="font-size: 0.8em;">Game initialization failed</span><br>
-                    <span style="font-size: 0.7em; margin-top: 10px; display: block; opacity: 0.7;">${error.message}</span>
-                </div>
-            `;
-        }
-    }, 1000);
-    
-    // Add visual feedback
-    document.querySelectorAll('.inventory-item').forEach(item => {
-        item.style.background = 'rgba(0, 255, 0, 0.05)';
-    });
-    
-    // Safely get the clicked element
-    if (event && event.target) {
-        const clickedItem = event.target.closest('.inventory-item');
-        if (clickedItem) {
-            clickedItem.style.background = 'rgba(0, 255, 0, 0.2)';
-        }
-    }
-    
-    console.log('=== LOADGAME END ===');
-}
-
-// Load game script dynamically
-function loadGameScript(gameFile, gameId, gameName) {
-    const gameContainer = document.getElementById('game-container');
-    
-    console.log(`Loading script: games/${gameFile}`);
-    
-    const script = document.createElement('script');
-    script.src = `games/${gameFile}`;
-    script.onload = () => {
-        console.log('Script loaded, waiting for initialization...');
-        setTimeout(() => {
-            try {
-                let gameInstance = null;
-                
-                // Try to get the game instance after script load
-                switch (gameFile) {
-                    case 'holotape-tetris.js':
-                        gameInstance = typeof tetrisGame !== 'undefined' ? tetrisGame : null;
-                        break;
-                    case 'atomic-command.js':
-                        gameInstance = typeof atomicGame !== 'undefined' ? atomicGame : null;
-                        break;
-                    case 'wasteland-pong.js':
-                        gameInstance = typeof pongGame !== 'undefined' ? pongGame : null;
-                        break;
-                }
-                
-                if (gameInstance && typeof gameInstance.init === 'function') {
-                    console.log('Game instance found after script load, initializing...');
-                    gameInstance.init(gameId);
-                    currentGame = gameInstance;
-                    gameInstances[gameFile] = gameInstance; // Store for future use
-                    console.log('Game initialized successfully after script load!');
-                } else {
-                    throw new Error('Game instance not available after script load');
-                }
-            } catch (error) {
-                console.error('Error initializing game after script load:', error);
-                gameContainer.innerHTML = `
-                    <div style="text-align: center; color: #ff6666; padding: 20px;">
-                        ERROR: HOLOTAPE CORRUPTED<br>
-                        <span style="font-size: 0.8em;">Unable to execute ${gameName}</span><br>
-                        <span style="font-size: 0.7em; margin-top: 10px; display: block; opacity: 0.7;">Script loaded but game failed to initialize</span>
-                    </div>
-                `;
-            }
-        }, 500);
-    };
-    
-    script.onerror = () => {
-        console.error('Failed to load game script:', gameFile);
-        gameContainer.innerHTML = `
-            <div style="text-align: center; color: #ff6666; padding: 20px;">
-                ERROR: HOLOTAPE NOT FOUND<br>
-                <span style="font-size: 0.8em;">Could not load ${gameName}</span><br>
-                <span style="font-size: 0.7em; margin-top: 10px; display: block; opacity: 0.7;">Script file missing or corrupted</span>
-            </div>
-        `;
-    };
-    
-    document.head.appendChild(script);
-}
-
-// Initialize games when the games tab is first accessed
-function initializeGamesTab() {
-    if (!document.getElementById('games-list').hasChildNodes()) {
-        loadGames();
-    }
-}
 
 // Tab switching
 function switchTab(tabName) {
@@ -665,9 +499,19 @@ document.addEventListener('keydown', function(e) {
             break;
         case 'Escape':
             // Stop current game
-            if (currentGame && typeof currentGame.stop === 'function') {
-                currentGame.stop();
+            if (currentGame) {
+                stopCurrentGame();
             }
             break;
     }
 });
+
+// Console startup messages
+console.log('%c██████╗ ██╗██████╗ ██████╗  ██████╗ ██╗   ██╗', 'color: #00ff00; font-family: monospace;');
+console.log('%c██╔══██╗██║██╔══██╗██╔══██╗██╔═══██╗╚██╗ ██╔╝', 'color: #00ff00; font-family: monospace;');
+console.log('%c██████╔╝██║██████╔╝██████╔╝██║   ██║ ╚████╔╝ ', 'color: #00ff00; font-family: monospace;');
+console.log('%c██╔═══╝ ██║██╔═══╝ ██╔══██╗██║   ██║  ╚██╔╝  ', 'color: #00ff00; font-family: monospace;');
+console.log('%c██║     ██║██║     ██████╔╝╚██████╔╝   ██║   ', 'color: #00ff00; font-family: monospace;');
+console.log('%c╚═╝     ╚═╝╚═╝     ╚═════╝  ╚═════╝    ╚═╝   ', 'color: #00ff00; font-family: monospace;');
+console.log('%c3000 MK IV - VAULT-TEC INDUSTRIES © 2077', 'color: #00ff00; font-family: monospace;');
+console.log('%cTERMINAL INITIALIZED...', 'color: #00ff00; font-family: monospace;');

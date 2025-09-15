@@ -1,0 +1,21 @@
+{
+  "name": "NUKA TAPPER",
+  "description": "Serve refreshing Nuka-Cola to thirsty wasteland customers",
+  "version": "v1.5.0",
+  "author": "NUKA-COLA CORPORATION",
+  "classification": "ARCADE/SERVICE",
+  "status": "OPERATIONAL",
+  "type": "ARCADE",
+  "difficulty": "NORMAL",
+  "players": "1",
+  "mainScript": "js/tapper.js",
+  "hasIndex": true,
+  "controls": {
+    "arrows": "Move bartender",
+    "space": "Serve Nuka-Cola",
+    "enter": "Collect empty bottles"
+  },
+  "requirements": "Pip-Boy 3000 MK III or higher",
+  "fileSize": "89KB",
+  "lastModified": "2077-09-15"
+}
