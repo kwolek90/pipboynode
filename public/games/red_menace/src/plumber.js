@@ -1,8 +1,7 @@
-
 class Plumber{
   constructor(game) {
     this.game = game;
-    this.posX = 430;
+    this.posX = 600; // startowa pozycja bliżej środka ekranu 800px
     this.posY = 503;
     this.width = 14;
     this.height = 16;

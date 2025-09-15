@@ -19,13 +19,21 @@
             font-family: 'Courier Prime', monospace;
             overflow: hidden;
             cursor: none;
-        }
-        
-        .pipboy-container {
             width: 100vw;
             height: 100vh;
+            min-width: 800px;
+            min-height: 600px;
+        }
+
+        .pipboy-container {
+            width: 800px;
+            height: 600px;
             background: radial-gradient(circle at center, #001100 0%, #000800 50%, #000000 100%);
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 40px #00ff0055, 0 0 0 100vw #000 inset;
         }
         
         .scan-line {
@@ -60,9 +68,9 @@
         }
         
         .terminal {
-            width: 90%;
-            height: 90%;
-            margin: 5%;
+            width: 100%;
+            height: 100%;
+            margin: 0;
             padding: 20px;
             background: rgba(0, 20, 0, 0.8);
             display: flex;
@@ -425,6 +433,9 @@
     </style>
 </head>
 <body>
+    <div id="screen-warning" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#000c;backdrop-filter:blur(2px);color:#00ff00;align-items:center;justify-content:center;text-align:center;font-size:2em;">
+        Rozdzielczość okna jest zbyt mała.<br>Minimalny rozmiar: 800x600px
+    </div>
     <div class="pipboy-container">
         <div class="scan-line"></div>
         <div class="crt-effect"></div>
@@ -478,5 +489,17 @@
     </div>
 
     <script src="js/pipboy.js"></script>
+    <script>
+    function checkScreenSize() {
+        const warning = document.getElementById('screen-warning');
+        if(window.innerWidth < 800 || window.innerHeight < 600) {
+            warning.style.display = 'flex';
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('DOMContentLoaded', checkScreenSize);
+    </script>
 </body>
 </html>

@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("game-canvas");
   const ctx = canvas.getContext("2d");
   const game = new Game();
-  canvas.width = 480;
-  canvas.height = 640;
+  canvas.width = 800;
+  canvas.height = 600;
 
   
   console.log("This is inside the index.js file")

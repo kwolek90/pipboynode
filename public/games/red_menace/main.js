@@ -248,7 +248,7 @@ console.log("Webpack is working! game.js")
 class Game {
   constructor() {
     this.width = 480;
-    this.height = 640;
+    this.height = 600;
     this.scale = 1.5;
     this.gravity = 9;
     this.jonkeySong = new _jonkey_song__WEBPACK_IMPORTED_MODULE_0__["default"](this);
@@ -468,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ctx = canvas.getContext("2d");
   const game = new _game__WEBPACK_IMPORTED_MODULE_0__["default"]();
   canvas.width = 480;
-  canvas.height = 640;
+  canvas.height = 600;
 
   
   console.log("This is inside the index.js file")
