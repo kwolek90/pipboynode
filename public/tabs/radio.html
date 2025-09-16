@@ -4,19 +4,21 @@
 ╚══════════════════════════════════════╝
 </div>
 
-<div class="radio-display">
-    <div class="frequency" id="frequency">105.7 FM</div>
-    <div id="station-name">DIAMOND CITY RADIO</div>
-    <div style="margin: 20px 0;">
-        <div>♪ Now Playing: "Atom Bomb Baby" ♪</div>
-        <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">
-            "It's a wonderful world we live in..."
+<div style="display: flex; min-height: 300px;">
+    <aside id="stations-list" style="width: 220px; background: #222; color: #fff; padding: 15px; margin-right: 20px; border-radius: 8px;">
+        <!-- Lista stacji generowana przez JS -->
+    </aside>
+    <div class="radio-display" style="flex: 1;">
+        <div class="frequency" id="frequency"></div>
+        <div id="station-name"></div>
+        <div style="margin: 20px 0;">
+            <div id="now-playing"></div>
+            <div id="track-artist" style="font-size: 0.8em; opacity: 0.7; margin-top: 2px;"></div>
+            <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;" id="station-desc"></div>
         </div>
-    </div>
-    
-    <div class="radio-controls">
-        <button class="radio-btn" onclick="changeStation(-1)">◄ PREV</button>
-        <button class="radio-btn" onclick="toggleRadio()" id="radio-toggle">PAUSE</button>
-        <button class="radio-btn" onclick="changeStation(1)">NEXT ►</button>
+        <!-- Usunięto radio-controls -->
+        <audio id="radio-audio" style="width:100%; margin-bottom: 10px; display:none;"></audio>
+        <canvas id="audio-visualizer" width="600" height="60" style="width:100%;margin-bottom:10px;"></canvas>
+        <script src="/js/radio.js"></script>
     </div>
 </div>

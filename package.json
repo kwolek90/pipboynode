@@ -7,13 +7,20 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["pipboy", "fallout", "terminal", "web-app", "node.js"],
+  "keywords": [
+    "pipboy",
+    "fallout",
+    "terminal",
+    "web-app",
+    "node.js"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "description": "Pipboy 3000 Terminal Interface - A Fallout-inspired web application",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "music-metadata": "^11.9.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

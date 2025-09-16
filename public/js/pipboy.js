@@ -25,7 +25,7 @@ async function loadTabContent(tabName) {
             tabElement.innerHTML = content;
             tabsLoaded[tabName] = true;
             console.log(`Tab ${tabName} loaded successfully`);
-            
+
             // Reinitialize tab-specific functionality
             if (tabName === 'stat') {
                 initializeStatAnimations();
@@ -33,6 +33,22 @@ async function loadTabContent(tabName) {
                 initializeInventoryItems();
             } else if (tabName === 'games') {
                 initializeGamesTab();
+            } else if (tabName === 'radio') {
+                // Usuń poprzedni radio.js jeśli istnieje
+                const oldScript = document.getElementById('radio-js');
+                if (oldScript) {
+                    oldScript.remove();
+                }
+                // Dynamicznie dołącz radio.js po załadowaniu zakładki Radio
+                const script = document.createElement('script');
+                script.src = '/js/radio.js';
+                script.id = 'radio-js';
+                script.onload = function() {
+                    if (typeof initializeRadioTab === 'function') {
+                        initializeRadioTab();
+                    }
+                };
+                document.body.appendChild(script);
             }
         }
     } catch (error) {
@@ -100,10 +116,10 @@ let radioPlaying = true;
 function changeStation(direction) {
     currentStation = (currentStation + direction + stations.length) % stations.length;
     const station = stations[currentStation];
-    
+
     document.getElementById('frequency').textContent = `${station.freq} FM`;
     document.getElementById('station-name').textContent = station.name;
-    
+
     // Add static effect
     document.getElementById('station-name').style.opacity = '0.3';
     setTimeout(() => {
