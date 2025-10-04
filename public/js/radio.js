@@ -29,7 +29,7 @@
       }
       if (!analyser) {
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64;
+        analyser.fftSize = 128;
       }
       if (!sourceNode) {
         try {
@@ -82,17 +82,6 @@
         // ok
       }).catch(function (err) {
         if (err && (err.name === 'NotAllowedError' || (err.message && err.message.indexOf('play') !== -1))) {
-          audio.muted = true;
-          audio.play().then(function () {
-            mutedFallback = true;
-            nowPlaying.textContent = 'Odtwarzanie w trybie wyciszonym. Kliknij aby odblokować.';
-          }).catch(function (err2) {
-            autoplayBlocked = true;
-            nowPlaying.textContent = 'Kliknij dowolny element strony, aby rozpocząć odtwarzanie radia.';
-            console.error('play blocked (muted fallback):', err2);
-          });
-        } else {
-          console.error('play() error:', err);
         }
       });
     }
@@ -119,7 +108,6 @@
               nowPlaying.textContent = 'Nic obecnie nie gra w tej stacji.';
               return;
             }
-            setupAudioNodes();
             audio.pause();
             audio.removeAttribute('preload');
             audio.src = data.file;
@@ -164,7 +152,11 @@
 
     function selectStation(st) {
       if (!st) return;
-      playRandomTrackForStation(st);
+      if (currentStation && currentStation.id === st.id) return;
+      currentStation = st;
+      setupAudioNodes();
+      if (startRadio)
+        playRandomTrackForStation(st);
     }
 
     function getStartTime(stationId, duration) {
@@ -255,10 +247,12 @@
           try {
             last = localStorage.getItem('radioLastStationId');
           } catch (e) {
+            console.log(e);
           }
           var found = stations.find(function (s) {
             return s.id === last;
           }) || stations[0];
+          console.log(found)
           selectStation(found);
         })
         .catch(function (err) {
@@ -272,12 +266,28 @@
       savePlaybackTime();
       if (currentStation) playRandomTrackForStation(currentStation);
     });
+
+    // Public fallback for starting radio from other scripts (pipboy.js etc.)
+    window.startFalloutRadio = function () {
+      try {
+        var el = document.getElementById('radio-audio');
+        console.log(el);
+        if (el && typeof el.start === 'function') {
+          el.start();
+          return;
+        }
+        console.log("starting radio via startFalloutRadio()");
+        console.log(currentStation);
+        playRandomTrackForStation(currentStation);
+      } catch (e) {
+        console.warn('window.startRadio error', e && e.message);
+      }
+    };
   }
 
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(initializeRadioTab, 0);
   } else {
     document.addEventListener('DOMContentLoaded', initializeRadioTab);
-
   }
 })();

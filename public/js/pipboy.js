@@ -43,11 +43,17 @@ async function loadTabContent(tabName) {
                 const script = document.createElement('script');
                 script.src = '/js/radio.js';
                 script.id = 'radio-js';
-                script.onload = function() {
-                    if (typeof initializeRadioTab === 'function') {
-                        initializeRadioTab();
-                    }
-                };
+                // Po załadowaniu skryptu spróbuj uruchomić radio (window.startRadio)
+                // script.onload = function() {
+                //     try {
+                //         console.log(window.startFalloutRadio);
+                //         if (typeof window.startFalloutRadio === 'function') {
+                //             window.startFalloutRadio();
+                //         }
+                //     } catch (e) {
+                //         console.warn('startRadio onload failed', e && e.message);
+                //     }
+                // };
                 document.body.appendChild(script);
             }
         }
@@ -455,7 +461,7 @@ document.addEventListener('click', function() {
         flash.remove();
     }, 50);
 });
-
+var startRadio = false;
 // Tab switching
 function switchTab(tabName) {
     // Remove active from all tabs and content
@@ -473,6 +479,20 @@ function switchTab(tabName) {
     // Initialize games if switching to games tab
     if (tabName === 'games') {
         initializeGamesTab();
+    }
+
+    console.log(tabName);
+    if (tabName === 'radio') {
+        startRadio = true;
+        // Jeśli skrypt radio.js już załadowany lub funkcja startRadio dostępna, odpal radio
+            try {
+                console.log(window.startFalloutRadio);
+                if (typeof window.startFalloutRadio === 'function') {
+                    window.startFalloutRadio();
+                }
+            } catch (e) {
+                console.warn('Could not start radio audio on tab switch:', e && e.message);
+            }
     }
 }
 
