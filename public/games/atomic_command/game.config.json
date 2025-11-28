@@ -10,9 +10,9 @@
   "players": "1",
   "mainScript": "main.js",
   "controls": {
-    "mouse": "Aim and fire anti-missile batteries",
-    "space": "Pause game",
-    "r": "Restart level"
+    "arrowKeys": "Move targeting cursor",
+    "space": "Fire missile",
+    "r": "Restart game"
   },
   "requirements": "Pip-Boy 3000 MK IV or higher",
   "fileSize": "18KB",

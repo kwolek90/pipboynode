@@ -214,8 +214,12 @@ function loadGame(gameInfo) {
         console.error('Game container not found!');
         return;
     }
-    
+
     // Stop current game if running
+
+    // Ustaw currentGame early, tak aby Escape działał także podczas ładowania
+    currentGame = gameInfo;
+
     if (currentGameFrame) {
         try {
             currentGameFrame.remove();
@@ -224,7 +228,7 @@ function loadGame(gameInfo) {
             console.error('Error removing current game:', e);
         }
     }
-    
+
     // Clear and show loading message
     gameContainer.innerHTML = `
         <div style="text-align: center; color: #00ff00; padding: 20px;">
@@ -232,7 +236,7 @@ function loadGame(gameInfo) {
             <div style="font-size: 0.8em; opacity: 0.7;">Reading holotape data...</div>
         </div>
     `;
-    
+
     // Determine how to load the game
     setTimeout(() => {
         try {
@@ -243,44 +247,31 @@ function loadGame(gameInfo) {
                 // Load games with just a main script
                 loadGameScript(gameInfo, gameContainer);
             } else {
-                throw new Error('No valid game entry point found');
+    // Add visual feedback
             }
         } catch (error) {
             console.error('Error loading game:', error);
             gameContainer.innerHTML = `
                 <div style="text-align: center; color: #ff6666; padding: 20px;">
-                    ERROR: HOLOTAPE CORRUPTED<br>
-                    <span style="font-size: 0.8em;">Unable to execute ${gameInfo.name}</span><br>
-                    <span style="font-size: 0.7em; margin-top: 10px; display: block; opacity: 0.7;">${error.message}</span>
+                    ERROR: Failed to load game<br>
+                    <span style="font-size: 0.8em;">${error.message}</span>
                 </div>
             `;
         }
-    }, 500);
-    
-    // Add visual feedback
-    document.querySelectorAll('.inventory-item').forEach(item => {
-        item.style.background = 'rgba(0, 255, 0, 0.05)';
     });
-    
-    if (event && event.target) {
-        const clickedItem = event.target.closest('.inventory-item');
-        if (clickedItem) {
-            clickedItem.style.background = 'rgba(0, 255, 0, 0.2)';
-        }
-    }
 }
 
 // Load game in iframe (for games with index.html)
 function loadGameInIframe(gameInfo, container) {
     console.log('Loading game in iframe:', gameInfo.name);
-    
+
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
     iframe.style.height = '500px';
     iframe.style.border = '2px solid #00ff00';
     iframe.style.background = '#000';
     iframe.src = `${gameInfo.path}index.html`;
-    
+
     // Add controls bar
     container.innerHTML = `
         <div style="background: rgba(0, 255, 0, 0.1); padding: 10px; margin-bottom: 10px; border: 1px solid #00ff00;">
@@ -299,7 +290,7 @@ function loadGameInIframe(gameInfo, container) {
             ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
         </div>
     `;
-    
+
     container.appendChild(iframe);
     currentGameFrame = iframe;
     currentGame = gameInfo;
@@ -308,13 +299,13 @@ function loadGameInIframe(gameInfo, container) {
 // Load game script directly (for games with just JS files)
 function loadGameScript(gameInfo, container) {
     console.log('Loading game script:', gameInfo.mainScript);
-    
+
     // Create a container for the game
     const gameDiv = document.createElement('div');
     gameDiv.id = 'game-instance-' + Date.now();
     gameDiv.style.width = '100%';
     gameDiv.style.minHeight = '400px';
-    
+
     // Add controls bar
     container.innerHTML = `
         <div style="background: rgba(0, 255, 0, 0.1); padding: 10px; margin-bottom: 10px; border: 1px solid #00ff00;">
@@ -333,15 +324,15 @@ function loadGameScript(gameInfo, container) {
             ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
         </div>
     `;
-    
+
     container.appendChild(gameDiv);
-    
+
     // Try to load and initialize the game
     const script = document.createElement('script');
     script.src = `${gameInfo.path}${gameInfo.mainScript}`;
     script.onload = () => {
         console.log('Game script loaded');
-        
+
         // Try to initialize the game with various methods
         setTimeout(() => {
             try {
@@ -361,7 +352,7 @@ function loadGameScript(gameInfo, container) {
             }
         }, 100);
     };
-    
+
     script.onerror = () => {
         console.error('Failed to load game script');
         container.innerHTML = `
@@ -371,7 +362,7 @@ function loadGameScript(gameInfo, container) {
             </div>
         `;
     };
-    
+
     document.head.appendChild(script);
     currentGame = gameInfo;
 }
@@ -379,11 +370,11 @@ function loadGameScript(gameInfo, container) {
 // Create controls display
 function createControlsDisplay(controls) {
     if (!controls || typeof controls !== 'object') return '';
-    
-    const controlsHtml = Object.entries(controls).map(([key, desc]) => 
+
+    const controlsHtml = Object.entries(controls).map(([key, desc]) =>
         `<span style="margin-right: 15px; font-size: 0.8em; opacity: 0.7;">${key.toUpperCase()}: ${desc}</span>`
     ).join('');
-    
+
     return `<div style="margin-top: 5px;">${controlsHtml}</div>`;
 }
 
@@ -393,7 +384,7 @@ window.stopCurrentGame = function() {
         currentGameFrame.remove();
         currentGameFrame = null;
     }
-    
+
     const gameContainer = document.getElementById('game-container');
     if (gameContainer) {
         gameContainer.innerHTML = `
@@ -402,9 +393,9 @@ window.stopCurrentGame = function() {
             </div>
         `;
     }
-    
+
     currentGame = null;
-    
+
     // Reset all game items background
     document.querySelectorAll('.inventory-item').forEach(item => {
         item.style.background = 'rgba(0, 255, 0, 0.05)';
@@ -424,18 +415,18 @@ function initializeGamesTab() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded, initializing Pipboy...');
-    
+
     // Load all tabs
     const tabs = ['stat', 'inv', 'data', 'map', 'radio', 'games'];
-    
+
     // Load the active tab first (stat)
     await loadTabContent('stat');
-    
+
     // Load other tabs in background
     tabs.filter(tab => tab !== 'stat').forEach(tab => {
         loadTabContent(tab);
     });
-    
+
     // Initialize other features after a small delay
     setTimeout(() => {
         console.log('Initializing additional features...');
@@ -454,9 +445,9 @@ document.addEventListener('click', function() {
     flash.style.background = 'rgba(0, 255, 0, 0.1)';
     flash.style.pointerEvents = 'none';
     flash.style.zIndex = '200';
-    
+
     document.body.appendChild(flash);
-    
+
     setTimeout(() => {
         flash.remove();
     }, 50);
@@ -471,11 +462,11 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
-    
+
     // Add active to clicked tab and corresponding content
     event.target.classList.add('active');
     document.getElementById(tabName).classList.add('active');
-    
+
     // Initialize games if switching to games tab
     if (tabName === 'games') {
         initializeGamesTab();
@@ -551,3 +542,4 @@ console.log('%c██║     ██║██║     ██████╔╝╚�
 console.log('%c╚═╝     ╚═╝╚═╝     ╚═════╝  ╚═════╝    ╚═╝   ', 'color: #00ff00; font-family: monospace;');
 console.log('%c3000 MK IV - VAULT-TEC INDUSTRIES © 2077', 'color: #00ff00; font-family: monospace;');
 console.log('%cTERMINAL INITIALIZED...', 'color: #00ff00; font-family: monospace;');
+
