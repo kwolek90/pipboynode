@@ -6,6 +6,52 @@ let canvas = document.querySelector("#game-canvas");
 let context = canvas.getContext("2d");
 
 let spriteSheet = "Images/invaders.gif";
+let spriteCache = {}; // key -> offscreen canvas with tinted frame
+
+function cacheKey(sx, sy, sw, sh, colorIndex) {
+  return `${sx}_${sy}_${sw}_${sh}_${colorIndex}`;
+}
+
+function tintImage(srcImg, sx, sy, sw, sh, color) {
+  let off = document.createElement('canvas');
+  off.width = sw;
+  off.height = sh;
+  let ctx = off.getContext('2d');
+  ctx.clearRect(0, 0, sw, sh);
+  ctx.drawImage(srcImg, sx, sy, sw, sh, 0, 0, sw, sh);
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, sw, sh);
+  ctx.globalCompositeOperation = 'source-over';
+  return off;
+}
+
+function prepareSpriteCache() {
+  if (!this.complete || this.naturalWidth === 0) {
+    this.onload = prepareSpriteCache;
+    return;
+  }
+
+  for (let i = 0; i < enemySprites.length; i++) {
+    let info = enemySprites[i];
+    let frames = [ {x: info.x1, y: info.y1}, {x: info.x2, y: info.y2} ];
+    for (let f = 0; f < frames.length; f++) {
+      for (let c = 0; c < colorArray.length; c++) {
+        let key = cacheKey(frames[f].x, frames[f].y, info.width, info.height, c);
+        if (!spriteCache[key]) spriteCache[key] = tintImage(this, frames[f].x, frames[f].y, info.width, info.height, colorArray[c]);
+      }
+    }
+  }
+
+  let playerCoords = {x:150, y:637, w:73, h:53};
+  for (let c = 0; c < colorArray.length; c++) {
+    let key = cacheKey(playerCoords.x, playerCoords.y, playerCoords.w, playerCoords.h, c);
+    if (!spriteCache[key]) spriteCache[key] = tintImage(this, playerCoords.x, playerCoords.y, playerCoords.w, playerCoords.h, colorArray[c]);
+  }
+}
+let spriteImg = new Image();
+spriteImg.src = spriteSheet;
+spriteImg.onload = prepareSpriteCache;
 
 let ded = "  _____" + "\n" +
 " /     \\" + "\n" +
@@ -15,11 +61,11 @@ let ded = "  _____" + "\n" +
 "  |||||" + "\n";
 
 let colorArray = [
-  "#124e78",
-  "#f0f0c9",
-  "#f2bb05",
-  "#d74e09",
-  "#6e0e0a"
+  "#00ac29",
+  "#025103",
+  "#003501",
+  "#1e8f34",
+  "#1ff646"
 ];
 
 let enemySprites = [
@@ -171,9 +217,10 @@ class Character extends GamePiece {
     this.bulletSpeed = bulletSpeed;
     //default sprite to null. if an image source is passed in, set sprite to the image
     this.sprite = null;
-    if (imgSrc != "") {
+    if (imgSrc !== "") {
       this.sprite = new Image();
       this.sprite.src = imgSrc;
+      this.sprite.onload = prepareSpriteCache;
     }
     this.srcX = srcX;
     this.srcY = srcY;
@@ -244,12 +291,23 @@ class Character extends GamePiece {
 
   //if an image for the sprite hasn't been passed in, draw a rectangle. otherwise, draw the sprite
   draw() {
-    if (this.sprite === null) {
+    if (!this.sprite) {
       super.draw();
+      return;
     }
-    else {
+
+    let colorIndex = colorArray.indexOf(this.color);
+    let key = cacheKey(this.srcX, this.srcY, this.srcWidth, this.srcHeight, colorIndex);
+    if (colorIndex !== -1 && spriteCache[key]) {
+      context.drawImage(spriteCache[key], this.x, this.y, this.width, this.height);
+      return;
+    }
+
+    if (this.sprite.complete && this.sprite.naturalWidth !== 0) {
       context.drawImage(this.sprite, this.srcX, this.srcY, this.srcWidth, this.srcHeight, this.x, this.y, this.width, this.height);
+      return;
     }
+    super.draw();
   }
 }
 
@@ -289,10 +347,14 @@ class Laser extends GamePiece {
 
 class Player extends Character {
   constructor(x, dx, width, height, imgSrc = "", srcX = 0, srcY = 0, srcWidth = 0, srcHeight = 0) {
-    let color = colorArray[Math.floor(Math.random() * colorArray.length)];
+    // wybierz losowy index koloru i zapisz go w instancji
+    let colorIndex = Math.floor(Math.random() * colorArray.length);
+    let color = colorArray[colorIndex];
     let y = canvas.height - height;
 
     super(x, y, dx, 0, width, height, color, 2, false, 9, imgSrc, srcX, srcY, srcWidth, srcHeight);
+
+    this.colorIndex = colorIndex; // zapis indexu koloru w obiekcie player
 
     this.lives = 5;
     this.ogSrcX = srcX;
@@ -389,7 +451,7 @@ class Enemy extends Character {
     this.firstAniFrame = true;
     this.spriteInfo = spriteInfo;
 
-    //nunber of lives is based on enemy type and what level it is.
+    //number of lives is based on enemy type and what level it is.
     //if the enemy type is greater than the level, the max lives is the level count
     //if the enemy type is less than or equal to the level, then lives are set to the enemy type
     this.lives = spriteInfo.hits > level ? level : spriteInfo.hits;
@@ -551,6 +613,14 @@ levels.push(level3);
 
 // initialize the start of the game
 let init = function() {
+  if (!spriteImg.complete || Object.keys(spriteCache).length === 0) {
+    spriteImg.onload = function() {
+      try { prepareSpriteCache.call(spriteImg); } catch(e) {}
+      init();
+    }
+    return;
+  }
+
   levels[0]();
   level = 1;
   score = 0;
@@ -598,7 +668,7 @@ let laserHitCheck = function() {
   }
 }
 
-//if an edge has been hit, all eneies will be moved down when they update this tick
+//if an edge has been hit, all enemies will be moved down when they update this tick
 function moveAllEnemiesDownCheck() {
   if (moveDownNextTick) {
     for (let i = 0; i < enemies.length; i++) {
@@ -611,20 +681,15 @@ function moveAllEnemiesDownCheck() {
 
 //draw the "Press Enter To Start" screen when the user navigates to the screen
 //the text appears when "flash" is true
-var flash = false;
+let flash = false;
+const fillStyle = "lightgreen";
 let drawStart = function() {
   drawBackground();
   if (flash) {
     let text = "Press Enter To Start";
     let fontSize = "28px"
-    // if (window.innerWidth >= 1000) {
-    //   text += " To Start";
-    // }
-    // if (window.innerWidth >= 1400) {
-    //   fontSize = "28px";
-    // }
     context.font = `${fontSize} 'Press Start 2P', cursive`;
-    context.fillStyle = "white";
+    context.fillStyle = fillStyle;
     context.fillText(text, canvas.width / 10, canvas.height / 2);
     flash = false;
   }
@@ -634,33 +699,43 @@ let drawStart = function() {
 //draw prompt to restart game
 let drawRestart = function() {
   context.font = "15px 'Press Start 2P', cursive";
-  context.fillStyle = "white";
+  context.fillStyle = fillStyle;
   context.fillText("Press Enter to restart game", canvas.width / 2 - 200, canvas.height / 2 + 100);
 }
 
 //draw the number of lives at the top of the screen along with the line separating the top portion from the game
-let life = new Image();
-life.src = spriteSheet;
+
 let drawLives = function() {
+  if (!player) return;
+
   context.beginPath();
   context.moveTo(0, 45);
   context.lineTo(canvas.width, 45);
-  context.strokeStyle = "white";
+  context.strokeStyle = fillStyle;
   context.stroke();
 
   context.font = "15px 'Press Start 2P', cursive";
-  context.fillStyle = "white";
+  context.fillStyle = fillStyle;
   context.fillText("Lives", canvas.width - 350, 31);
 
+  // używamy colorIndex zapisanej w playerze
+  let colorIndex = (player && typeof player.colorIndex === 'number') ? player.colorIndex : 0;
   for (let i = 0; i < player.getLives(); i++) {
-    context.drawImage(life, 150, 637, 73, 53, canvas.width - 250 + (i * 50), 8, 30, 25);
+    let key = cacheKey(150, 637, 73, 53, colorIndex);
+
+    if (spriteCache[key]) {
+      context.drawImage(spriteCache[key], canvas.width - 250 + (i * 50), 8, 30, 25);
+    }
+    else{
+      context.drawImage(spriteImg, 150, 637, 73, 53, canvas.width - 250 + (i * 50), 8, 30, 25);
+    }
   }
 }
 
 //draw the user's score
 let drawScore = function() {
   context.font = "15px 'Press Start 2P', cursive";
-  context.fillStyle = "white";
+  context.fillStyle = fillStyle;
   context.fillText(`Score: ${score}`, 30, 30);
 }
 
@@ -668,14 +743,14 @@ let drawScore = function() {
 let drawNextLevel = function() {
   let levelDisplayed = level + 1;
   context.font = "30px 'Press Start 2P', cursive";
-  context.fillStyle = "white";
+  context.fillStyle = fillStyle;
   context.fillText(`Level ${levelDisplayed}`, canvas.width / 2 - 110, canvas.height / 2);
 }
 
 //draw the text indicating that the user has won
 let youWin = function() {
   context.font = "40px 'Press Start 2P', cursive";
-  context.fillStyle = "white";
+  context.fillStyle = fillStyle;
   context.fillText("You Win!!!", canvas.width / 2 - 190, canvas.height / 2);
   drawRestart();
 
@@ -693,7 +768,7 @@ let checkGamePaused = function() {
       }
       gamePausedDelay++;
       context.font = "40px 'Press Start 2P', cursive";
-      context.fillStyle = "white";
+      context.fillStyle = fillStyle;
       context.fillText(`Lives: ${player.getLives()}`, canvas.width / 2 - 160, canvas.height / 2);
     }
     else {
@@ -708,7 +783,7 @@ let checkGamePaused = function() {
 let checkGameOver = function() {
   if (gameOver) {
     context.font = "40px 'Press Start 2P', cursive";
-    context.fillStyle = "white";
+    context.fillStyle = fillStyle;
     context.fillText("Game Over", canvas.width / 2 - 175, canvas.height / 2);
     drawRestart();
   }
@@ -751,7 +826,7 @@ let playEnemyMovementSounds = function() {
   else enemyAudioTrack = 0;
 }
 
-//funtion that's run to play game
+//function that's run to play game
 //updates all of the necessary components to keep game running
 let gameLoop = function() {
   requestAnimationFrame(gameLoop);
@@ -776,11 +851,11 @@ let gameLoop = function() {
 /* Runs before game begins to execute */
 drawStart();
 //Sets an interval to run the drawStart function
-var presStart = setInterval(drawStart, 400);
+let presStart = setInterval(drawStart, 400);
 
 
 /* Event Listeners */
-//spaceDown is used to ensure that the keypress event doesn't cause the function that runs when the sapce bar is pressed to be called multiple times
+//spaceDown is used to ensure that the keypress event doesn't cause the function that runs when the space bar is pressed to be called multiple times
 let spaceDown = false;
 
 //sets what key is currently being pressed down (used in player's update function)

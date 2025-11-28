@@ -208,7 +208,18 @@ function createGameItem(gameInfo, container) {
 // Load and run a game
 function loadGame(gameInfo) {
     console.log('Loading game:', gameInfo);
-    
+
+    // Show games list again
+    const gamesListEl = document.getElementById('games-list');
+    if (gamesListEl) {
+        gamesListEl.style.display = 'none';
+    }
+    // Show games list again
+    const gamesFooterEl = document.getElementById('games-footer');
+    if (gamesFooterEl) {
+        gamesFooterEl.style.display = 'none';
+    }
+
     const gameContainer = document.getElementById('game-container');
     if (!gameContainer) {
         console.error('Game container not found!');
@@ -267,14 +278,20 @@ function loadGameInIframe(gameInfo, container) {
 
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
-    iframe.style.height = '500px';
+    iframe.style.height = '350px';
     iframe.style.border = '2px solid #00ff00';
     iframe.style.background = '#000';
     iframe.src = `${gameInfo.path}index.html`;
 
     // Add controls bar
     container.innerHTML = `
-        <div style="background: rgba(0, 255, 0, 0.1); padding: 10px; margin-bottom: 10px; border: 1px solid #00ff00;">
+        <div style="background: rgba(0, 255, 0, 0.1); margin-bottom: 10px; border: 1px solid #00ff00;">
+        </div>
+    `;
+    const controls = document.createElement('div');
+    controls.innerHTML = `
+        <div>
+            ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-weight: bold;">${gameInfo.name}</div>
                 <button onclick="stopCurrentGame()" style="
@@ -287,11 +304,11 @@ function loadGameInIframe(gameInfo, container) {
                     font-weight: bold;
                 ">EXIT GAME</button>
             </div>
-            ${gameInfo.controls ? createControlsDisplay(gameInfo.controls) : ''}
         </div>
     `;
 
     container.appendChild(iframe);
+    container.appendChild(controls);
     currentGameFrame = iframe;
     currentGame = gameInfo;
 }
@@ -377,9 +394,50 @@ function createControlsDisplay(controls) {
 
     return `<div style="margin-top: 5px;">${controlsHtml}</div>`;
 }
+// Helper to refit currently running game (iframe or div)
+function refitCurrentGame() {
+    try {
+        if (!currentGameFrame) return;
+
+        if (currentGameFrame.tagName && currentGameFrame.tagName.toLowerCase() === 'iframe') {
+            // Try to fit iframe; may silently fail for cross-origin
+            fitIFrameToContent(currentGameFrame);
+        } else {
+            // It's a div container for script-based games
+            fitDivToContent(currentGameFrame);
+        }
+    } catch (e) {
+        console.warn('refitCurrentGame failed', e && e.message);
+    }
+}
+
+// Debounced resize handler to rescale active game
+let _pipboy_resize_timer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(_pipboy_resize_timer);
+    _pipboy_resize_timer = setTimeout(() => {
+        refitCurrentGame();
+    }, 120);
+});
 
 // Stop current game
+        // Also ensure we refit later if needed
+        setTimeout(() => refitCurrentGame(), 200);
+
 window.stopCurrentGame = function() {
+
+    // Show games list again
+    const gamesListEl = document.getElementById('games-list');
+    if (gamesListEl) {
+        gamesListEl.style.display = '';
+    }
+
+    // Show games list again
+    const gamesFooterEl = document.getElementById('games-footer');
+    if (gamesFooterEl) {
+        gamesFooterEl.style.display = '';
+    }
+
     if (currentGameFrame) {
         currentGameFrame.remove();
         currentGameFrame = null;
