@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipboy 3000 Terminal</title>
+</head>
+<body>
+    <div id="screen-warning" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:#000c;backdrop-filter:blur(2px);color:#00ff00;align-items:center;justify-content:center;text-align:center;font-size:2em;">
+        Rozdzielczość okna jest zbyt mała.<br>Minimalny rozmiar: 800x600px
+    </div>
+    <div class="pipboy-container">
+        <div class="scan-line"></div>
+        <div class="crt-effect"></div>
+        
+        <div class="terminal">
+            <div class="header">
+                <div class="title">PipBoy 3000 Mk IV</div>
+                <div class="date-time" id="datetime"></div>
+            </div>
+            
+            <div class="content">
+                <!-- Tab content will be loaded dynamically -->
+                <div class="tab-content active" id="stat">
+                    <!-- Content loaded from tabs/stat.html -->
+                </div>
+                
+                <div class="tab-content" id="inv">
+                    <!-- Content loaded from tabs/inv.html -->
+                </div>
+                
+                <div class="tab-content" id="data">
+                    <!-- Content loaded from tabs/data.html -->
+                </div>
+                
+                <div class="tab-content" id="map">
+                    <!-- Content loaded from tabs/map.html -->
+                </div>
+                
+                <div class="tab-content" id="radio">
+                    <!-- Content loaded from tabs/radio.html -->
+                </div>
+
+                <div class="tab-content" id="games">
+                    <!-- Content loaded from tabs/games.html -->
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('stat')">STAT</button>
+                <button class="tab" onclick="switchTab('inv')">INV</button>
+                <button class="tab" onclick="switchTab('data')">DATA</button>
+                <button class="tab" onclick="switchTab('map')">MAP</button>
+                <button class="tab" onclick="switchTab('radio')">RADIO</button>
+                <button class="tab" onclick="switchTab('games')">GAMES</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px; font-size: 0.8em; opacity: 0.5;">
+                [ VAULT-TEC INDUSTRIES © 2077 ] <span class="cursor">█</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/pipboy.js"></script>
+    <script>
+    function checkScreenSize() {
+        const warning = document.getElementById('screen-warning');
+        if(window.innerWidth < 800 || window.innerHeight < 600) {
+            warning.style.display = 'flex';
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('DOMContentLoaded', checkScreenSize);
+    </script>
+</body>
+</html>
