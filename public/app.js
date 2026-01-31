@@ -134,6 +134,25 @@ function setupItemSelection() {
       const parent = item.parentElement;
       parent.querySelectorAll('.active').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
+
+      // Jeśli to notatka z data-note-id, wyświetl jej zawartość
+      if (item.hasAttribute('data-note-id')) {
+        const noteId = item.getAttribute('data-note-id');
+        const notesPreview = contentContainer.querySelector('.notes-preview');
+        const notesData = contentContainer.querySelector('.notes-data');
+
+        if (notesPreview && notesData) {
+          const noteItem = notesData.querySelector(`.note-item[data-note-id="${noteId}"]`);
+
+          if (noteItem) {
+            const title = noteItem.querySelector('.note-title').textContent;
+            const content = noteItem.querySelector('.note-content').textContent;
+
+            notesPreview.querySelector('.notes-title').textContent = title;
+            notesPreview.querySelector('.notes-text').textContent = content;
+          }
+        }
+      }
     });
   });
 }

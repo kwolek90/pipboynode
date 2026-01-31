@@ -18,16 +18,34 @@
     </div>
   </div>
 
-  <div class="content " id="notes" style="display:none;">
+  <div class="content" id="notes">
     <div class="data-content">
       <div class="data-list">
-        <div class="data-item active">Experiment day 0</div>
-        <div class="data-item">Experiment day 1</div>
+        <div class="data-item active" data-note-id="0">Experiment day 0</div>
+        <div class="data-item" data-note-id="1">Experiment day 1</div>
+      </div>
+      <div class="notes-preview">
+        <div class="notes-content">
+          <div class="notes-title">Experiment day 0</div>
+          <div class="notes-text">This is the content of the first experiment note. Day 0 observations recorded. All systems nominal.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ukryta sekcja z danymi notatek -->
+    <div class="notes-data" style="display:none;">
+      <div class="note-item" data-note-id="0">
+        <div class="note-title">Experiment day 0</div>
+        <div class="note-content">This is the content of the first experiment note. Day 0 observations recorded. All systems nominal.</div>
+      </div>
+      <div class="note-item" data-note-id="1">
+        <div class="note-title">Experiment day 1</div>
+        <div class="note-content">Day 1 - Notable changes observed. The subject shows increased awareness. Further monitoring required.</div>
       </div>
     </div>
   </div>
 
-  <div class="content" id="stats" style="display:none;">
+  <div class="content" id="stats">
     <div class="data-content">
       <div class="data-list">
         <div class="data-item">Locations Discovered: 15</div>
