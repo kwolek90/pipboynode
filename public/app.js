@@ -135,6 +135,32 @@ function setupItemSelection() {
       parent.querySelectorAll('.active').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
 
+      // Jeśli to quest z data-quest-id, wyświetl jego zawartość
+      if (item.hasAttribute('data-quest-id')) {
+        const questId = item.getAttribute('data-quest-id');
+        const questsPreview = contentContainer.querySelector('.quests-preview');
+        const questsData = contentContainer.querySelector('.quests-data');
+
+        if (questsPreview && questsData) {
+          const questItem = questsData.querySelector(`.quest-item[data-quest-id="${questId}"]`);
+
+          if (questItem) {
+            const title = questItem.querySelector('.quest-title').textContent;
+            const description = questItem.querySelector('.quest-description').textContent;
+            const objectives = questItem.querySelector('.quest-objectives');
+
+            questsPreview.querySelector('.quests-title').textContent = title;
+            questsPreview.querySelector('.quests-description').textContent = description;
+
+            // Wyświetl objectives
+            const objectivesContainer = questsPreview.querySelector('.quest-objectives');
+            if (objectivesContainer && objectives) {
+              objectivesContainer.innerHTML = objectives.innerHTML;
+            }
+          }
+        }
+      }
+
       // Jeśli to notatka z data-note-id, wyświetl jej zawartość
       if (item.hasAttribute('data-note-id')) {
         const noteId = item.getAttribute('data-note-id');
